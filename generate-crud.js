@@ -361,7 +361,7 @@ function generateCodeJsMapping() {
 // ==========================================
 // 4. FILE PATHS
 // ==========================================
-const ROOT = 'd:/GAS/siakad';
+const ROOT = process.cwd();
 const paths = {
   server: path.join(ROOT, `${entityCapital}.js`),
   view: path.join(ROOT, `views/modules/${entityCapital}View.html`),
