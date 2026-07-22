@@ -55,6 +55,24 @@ function buildResult(success, message) {
   return { success: success, message: message };
 }
 
+/**
+ * Konversi Date object ke string di dalam array of arrays
+ * Spreadsheet getValues() mengembalikan Date untuk sel format tanggal,
+ * yang tidak bisa diserialisasi oleh google.script.run
+ */
+function sanitizeData(data) {
+  if (!data || !Array.isArray(data)) return data || [];
+  return data.map(function(row) {
+    if (!row || !Array.isArray(row)) return row;
+    return row.map(function(cell) {
+      if (Object.prototype.toString.call(cell) === '[object Date]') {
+        return Utilities.formatDate(cell, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+      }
+      return String(cell || '');
+    });
+  });
+}
+
 // ==========================================
 // ENTRY POINT
 // ==========================================
@@ -73,7 +91,9 @@ function resolveTemplatePath(filename) {
     'JavascriptDashboard': 'views/scripts/modules/dashboard/JavascriptDashboard',
     'JavascriptLaporan': 'views/scripts/modules/laporan/JavascriptLaporan',
     // >>> Tambahkan mapping view entitas baru di sini <<<
-    // Contoh: 'BarangView': 'views/modules/BarangView',
+    'JurusanView': 'views/modules/JurusanView',
+    'SiswaView': 'views/modules/SiswaView',
+   
   };
   return map[filename] || filename;
 }

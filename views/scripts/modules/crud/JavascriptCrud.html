@@ -1,195 +1,509 @@
-  <script>
-    // ==========================================
-    // KONFIGURASI CRUD PER ENTITAS
-    // ==========================================
-    const crudConfig = {
-      // >>> Entitas CRUD akan ditambahkan di sini oleh generate-crud.js <<<
+<script>
+  // ==========================================
+  // KONFIGURASI CRUD PER ENTITAS
+  // ==========================================
+  const crudConfig = {
+    // >>> Entitas CRUD akan ditambahkan di sini oleh generate-crud.js <<<
+  
+  jurusan: {
+    formWrapperId: "formJurusan",
+    tableId: "tabelJurusan",
+    titleFormId: "titleFormJurusan",
+    form: {
+        id:   { el: "jurusan_id", type: "hidden" },
+        nama: { el: "jurusan_nama", type: "text", label: "Nama", placeholder: "Nama Jurusan" },
+        kode: { el: "jurusan_kode", type: "text", label: "Kode", placeholder: "Kode Jurusan" }
+    },
+    btnSaveId: "btnSimpanJurusan",
+    btnCancelId: "btnBatalJurusan",
+    loader: ["getJurusan"],
+    create: "createJurusan",
+    update: "updateJurusan",
+    delete: "deleteJurusan",
+    tableColumns: [
+        { label: "ID", key: 0 },
+        { label: "Nama", key: 1 },
+        { label: "Kode", key: 2 }
+    ]
+  },
+    siswa: {
+      formWrapperId: "formSiswa",
+      tableId: "tabelSiswa",
+      titleFormId: "titleFormSiswa",
+      form: {
+        id: { el: "siswa_id", type: "hidden" },
+        nama: {
+          el: "siswa_nama",
+          type: "text",
+          label: "Nama",
+          placeholder: "Nama",
+        },
+        kelas: {
+          el: "siswa_kelas",
+          type: "radio",
+          label: "Kelas",
+          options: ["XI", "XII"],
+        },
+        Jurusan: {
+          el: "siswa_Jurusan",
+          type: "dropdown",
+          label: "Jurusan",
+          options:  ['-- Memuat Jurusan --'],
+        },
+        Sekolah: {
+          el: "siswa_Sekolah",
+          type: "text",
+          label: "Sekolah",
+          placeholder: "Sekolah",
+        },
+        PeriodeAwal: {
+          el: "siswa_PeriodeAwal",
+          type: "date",
+          label: "PeriodeAwal",
+          placeholder: "PeriodeAwal",
+        },
+        PeriodeAkhir: {
+          el: "siswa_PeriodeAkhir",
+          type: "date",
+          label: "PeriodeAkhir",
+          placeholder: "PeriodeAkhir",
+        },
+        Pembimbing: {
+          el: "siswa_Pembimbing",
+          type: "text",
+          label: "Pembimbing",
+          placeholder: "Pembimbing",
+        },
+        Surat: {
+          el: "siswa_Surat",
+          type: "text",
+          label: "Surat",
+          placeholder: "Surat",
+        },
+        TanggalSurat: {
+          el: "siswa_TanggalSurat",
+          type: "text",
+          label: "TanggalSurat",
+          placeholder: "TanggalSurat",
+        },
+      },
+      btnSaveId: "btnSimpanSiswa",
+      btnCancelId: "btnBatalSiswa",
+      loader: ["getSiswa"],
+      create: "createSiswa",
+      update: "updateSiswa",
+      delete: "deleteSiswa",
+      tableColumns: [
+        { label: "ID", key: 0 },
+        { label: "Nama", key: 1 },
+        { label: "Kelas", key: 2 },
+        { label: "Jurusan", key: 3 },
+        { label: "Sekolah", key: 4 },
+        { label: "PeriodeAwal", key: 5 },
+        { label: "PeriodeAkhir", key: 6 },
+        { label: "Pembimbing", key: 7 },
+        { label: "Surat", key: 8 },
+        { label: "TanggalSurat", key: 9 },
+      ],
+    },
+  };
+
+  // ==========================================
+  // RENDER FORM
+  // ==========================================
+  function renderForm(entity) {
+    const cfg = crudConfig[entity];
+    const wrapper = document.getElementById(cfg.formWrapperId);
+    wrapper.innerHTML = `<h4 id="${cfg.titleFormId}" class="text-lg font-semibold mb-4 text-slate-700">Tambah ${capitalize(entity)}</h4>`;
+
+    for (const key in cfg.form) {
+      const field = cfg.form[key];
+      const labelText = field.label || key; // ambil label, fallback ke key
+      let html = "";
+
+      // Hidden field tidak perlu label
+      if (field.type === "hidden") {
+        html = `<input type="hidden" id="${field.el}">`;
+        wrapper.innerHTML += `<div class="mb-3">${html}</div>`;
+        continue;
+      }
+
+      // Label dengan styling
+      let labelHtml = `<label for="${field.el}" class="block text-sm font-medium text-slate-700 mb-1">${labelText}</label>`;
+
+      // Bangun elemen input sesuai tipe
+      let inputHtml = "";
+      switch (field.type) {
+        case "text":
+        case "email":
+        case "number":
+        case "password":
+        case "date":
+          inputHtml = `<input type="${field.type}" id="${field.el}" placeholder="${field.placeholder || ""}" class="border p-2.5 rounded-lg w-full">`;
+          break;
+        case "textarea":
+          inputHtml = `<textarea id="${field.el}" placeholder="${field.placeholder || ""}" class="border p-2.5 rounded-lg w-full"></textarea>`;
+          break;
+        case "radio":
+          // Untuk radio, label grup diletakkan di atas, opsi di bawah
+          const radioOptions = field.options
+            .map(
+              (opt) =>
+                `<label class="mr-3"><input type="radio" name="${field.el}" value="${opt}"> ${opt}</label>`,
+            )
+            .join(" ");
+          inputHtml = `<div class="flex flex-wrap gap-2">${radioOptions}</div>`;
+          break;
+        case "dropdown":
+          inputHtml = `<select id="${field.el}" class="border p-2.5 rounded-lg w-full">${field.options.map((opt) => `<option value="${opt}">${opt}</option>`).join("")}</select>`;
+          break;
+      }
+
+      // Gabungkan label + input dalam satu div
+      html = labelHtml + inputHtml;
+      wrapper.innerHTML += `<div class="mb-3">${html}</div>`;
+    }
+
+    // Tombol Simpan & Batal
+    wrapper.innerHTML += `
+    <div class="flex gap-3">
+      <button id="${cfg.btnSaveId}" onclick="simpanData('${entity}')" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg">Simpan</button>
+      <button id="${cfg.btnCancelId}" onclick="resetForm('${entity}')" class="bg-slate-200 text-slate-700 px-5 py-2.5 rounded-lg hidden">Batal</button>
+    </div>`;
+  }
+  // ==========================================
+  // FORM HELPERS
+  // ==========================================
+  function getFieldValue(field) {
+    if (field.type === "radio") {
+      const checked = document.querySelector(
+        `input[name="${field.el}"]:checked`,
+      );
+      return checked ? checked.value : "";
+    }
+    const el = document.getElementById(field.el);
+    return el ? el.value : "";
+  }
+
+  function setFieldValue(field, val) {
+    if (field.type === "radio") {
+      document
+        .querySelectorAll(`input[name="${field.el}"]`)
+        .forEach((r) => (r.checked = r.value === val));
+    } else {
+      const el = document.getElementById(field.el);
+      if (el) el.value = val;
+    }
+  }
+
+  // ==========================================
+  // DATA CACHE (for edit operations)
+  // ==========================================
+  const _crudDataCache = {};
+
+  // ==========================================
+  // LOAD DATA
+  // ==========================================
+  function loadData(entity) {
+    const cfg = crudConfig[entity];
+    const tbody = document.getElementById(cfg.tableId);
+    tbody.innerHTML = '<tr><td colspan="99">Memuat...</td></tr>';
+
+    const handler = function (data) {
+      _crudDataCache[entity] = data || [];
+      renderTable(entity, data);
     };
 
-    // ==========================================
-    // RENDER FORM
-    // ==========================================
-    function renderForm(entity) {
-      const cfg = crudConfig[entity];
-      const wrapper = document.getElementById(cfg.formWrapperId);
-      wrapper.innerHTML = `<h4 id="${cfg.titleFormId}" class="text-lg font-semibold mb-4 text-slate-700">Tambah ${capitalize(entity)}</h4>`;
+    const errorHandler = function (err) {
+      const msg = err && err.message ? err.message : String(err);
+      tbody.innerHTML =
+        '<tr><td colspan="99" class="text-red-500 py-4 px-4">Gagal memuat data: ' +
+        msg +
+        "</td></tr>";
+      showToast("Gagal memuat data: " + msg, "error");
+    };
 
-      for (const key in cfg.form) {
-        const field = cfg.form[key];
-        let html = '';
+    if (!cfg.loader || cfg.loader.length === 0) {
+      google.script.run
+        .withSuccessHandler(handler)
+        .withFailureHandler(errorHandler)
+        .getSheet(entity);
+    } else {
+      google.script.run
+        .withSuccessHandler(handler)
+        .withFailureHandler(errorHandler)
+        [cfg.loader[0]]();
+    }
+  }
 
-        switch (field.type) {
-          case 'hidden':
-            html = `<input type="hidden" id="${field.el}">`;
-            break;
-          case 'text': case 'email': case 'number': case 'password':
-            html = `<input type="${field.type}" id="${field.el}" placeholder="${field.placeholder || ''}" class="border p-2.5 rounded-lg w-full">`;
-            break;
-          case 'textarea':
-            html = `<textarea id="${field.el}" placeholder="${field.placeholder || ''}" class="border p-2.5 rounded-lg w-full"></textarea>`;
-            break;
-          case 'radio':
-            html = field.options.map(opt => `<label class="mr-3"><input type="radio" name="${field.el}" value="${opt}"> ${opt}</label>`).join(' ');
-            break;
-          case 'dropdown':
-            html = `<select id="${field.el}" class="border p-2.5 rounded-lg w-full">${field.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}</select>`;
-            break;
-        }
+  // ==========================================
+  // RENDER TABLE
+  // ==========================================
+  function renderTable(entity, data) {
+    const cfg = crudConfig[entity];
+    const tbody = document.getElementById(cfg.tableId);
 
-        wrapper.innerHTML += `<div class="mb-3">${html}</div>`;
-      }
-
-      wrapper.innerHTML += `
-        <div class="flex gap-3">
-          <button id="${cfg.btnSaveId}" onclick="simpanData('${entity}')" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg">Simpan</button>
-          <button id="${cfg.btnCancelId}" onclick="resetForm('${entity}')" class="bg-slate-200 text-slate-700 px-5 py-2.5 rounded-lg hidden">Batal</button>
-        </div>`;
+    // Wrap table with horizontal scroll if not already wrapped
+    const tableEl = tbody.closest("table");
+    if (
+      tableEl &&
+      tableEl.parentElement &&
+      !tableEl.parentElement.classList.contains("table-scroll-wrap")
+    ) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "table-scroll-wrap overflow-x-auto";
+      tableEl.parentElement.insertBefore(wrapper, tableEl);
+      wrapper.appendChild(tableEl);
     }
 
-    // ==========================================
-    // FORM HELPERS
-    // ==========================================
-    function getFieldValue(field) {
-      if (field.type === 'radio') {
-        const checked = document.querySelector(`input[name="${field.el}"]:checked`);
-        return checked ? checked.value : '';
-      }
-      const el = document.getElementById(field.el);
-      return el ? el.value : '';
+    tbody.innerHTML = "";
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="99">Data kosong.</td></tr>';
+      return;
     }
 
-    function setFieldValue(field, val) {
-      if (field.type === 'radio') {
-        document.querySelectorAll(`input[name="${field.el}"]`).forEach(r => r.checked = (r.value === val));
+    // Build a map of column index → field type (from cfg.form)
+    const formKeys = Object.keys(cfg.form);
+    const colTypeMap = {};
+    formKeys.forEach((key, idx) => {
+      colTypeMap[idx] = cfg.form[key].type;
+    });
+
+    data.forEach((row, rowIndex) => {
+      let cells = "";
+      const columns = cfg.tableColumns || [];
+
+      if (columns.length === 0) {
+        // Fallback: render all columns
+        cells = row
+          .map((val) => {
+            const displayVal = formatCellValue(val, null);
+            return `<td class="py-2 px-4 whitespace-nowrap">${displayVal}</td>`;
+          })
+          .join("");
       } else {
-        const el = document.getElementById(field.el);
-        if (el) el.value = val;
-      }
-    }
-
-    // ==========================================
-    // LOAD DATA
-    // ==========================================
-    function loadData(entity) {
-      const cfg = crudConfig[entity];
-      const tbody = document.getElementById(cfg.tableId);
-      tbody.innerHTML = '<tr><td colspan="99">Memuat...</td></tr>';
-
-      if (!cfg.loader || cfg.loader.length === 0) {
-        google.script.run.withSuccessHandler(data => renderTable(entity, data)).getSheet(entity);
-      } else {
-        cfg.loader.forEach(fn => {
-          google.script.run.withSuccessHandler(data => renderTable(entity, data))[fn]();
+        columns.forEach((col) => {
+          const rawVal = row[col.key] !== undefined ? row[col.key] : "";
+          const fieldType = colTypeMap[col.key] || "text";
+          const displayVal = formatCellValue(rawVal, fieldType);
+          cells += `<td class="py-2 px-4 whitespace-nowrap">${displayVal}</td>`;
         });
       }
+
+      const editOnclick = `editDataByIndex('${entity}', ${rowIndex})`;
+
+      tbody.innerHTML += `
+      <tr class="hover:bg-slate-50 border-b">
+        ${cells}
+        <td class="py-2 px-4 whitespace-nowrap">
+          <button onclick="${editOnclick}" class="text-blue-600 hover:underline mr-2">Edit</button>
+          <button onclick="hapusData('${entity}','${String(row[0] || "").replace(/'/g, "\\'")}')" class="text-red-600 hover:underline">Hapus</button>
+        </td>
+      </tr>`;
+    });
+  }
+
+  /**
+   * Format a cell value based on its type.
+   * - If value is a Date object → format as YYYY-MM-DD
+   * - If value is falsy (empty, null, undefined) → show "—" (em dash)
+   * - Otherwise → return the value as-is
+   */
+  function formatCellValue(value, fieldType) {
+    // Handle empty / null / undefined
+    if (value === null || value === undefined || value === "") {
+      return "—"; // or return '' if you prefer blank
     }
 
-    // ==========================================
-    // RENDER TABLE
-    // ==========================================
-    function renderTable(entity, data) {
-      const cfg = crudConfig[entity];
-      const tbody = document.getElementById(cfg.tableId);
-      tbody.innerHTML = '';
-
-      if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="99">Data kosong.</td></tr>';
-        return;
-      }
-
-      data.forEach(row => {
-        let cells = '';
-        const columns = cfg.tableColumns || [];
-        if (columns.length === 0) {
-          cells = row.map(val => `<td>${val}</td>`).join('');
-        } else {
-          columns.forEach(col => {
-            const val = row[col.key] !== undefined ? row[col.key] : '';
-            cells += `<td>${val}</td>`;
-          });
-        }
-
-        tbody.innerHTML += `
-          <tr class="hover:bg-slate-50 border-b">
-            ${cells}
-            <td class="py-2 px-4 flex gap-2">
-              <button onclick="editData('${entity}','${row.join("','")}')" class="text-blue-600 hover:underline">Edit</button>
-              <button onclick="hapusData('${entity}','${row[0]}')" class="text-red-600 hover:underline">Hapus</button>
-            </td>
-          </tr>`;
-      });
+    // If it's a Date object, format it
+    if (value instanceof Date) {
+      // Format as YYYY-MM-DD (adjust to your preferred format)
+      const year = value.getFullYear();
+      const month = String(value.getMonth() + 1).padStart(2, "0");
+      const day = String(value.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
     }
 
-    // ==========================================
-    // SIMPAN DATA
-    // ==========================================
-    function simpanData(entity) {
-      const cfg = crudConfig[entity];
-      const obj = {};
-      for (const key in cfg.form) {
-        obj[key] = getFieldValue(cfg.form[key]);
+    // If field type is 'date' but value is a string, try to parse it
+    if (fieldType === "date" && typeof value === "string") {
+      const parsed = new Date(value);
+      if (!isNaN(parsed)) {
+        const year = parsed.getFullYear();
+        const month = String(parsed.getMonth() + 1).padStart(2, "0");
+        const day = String(parsed.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
       }
-      if (!obj.nama) return showToast('Nama wajib diisi!', 'error');
+    }
 
-      const btn = document.getElementById(cfg.btnSaveId);
-      btn.innerText = 'Menyimpan...';
+    // Default: return as string
+    return String(value);
+  }
+  // ==========================================
+  // EDIT DATA BY INDEX (from cache, no server call)
+  // ==========================================
+  function editDataByIndex(entity, rowIndex) {
+    const cfg = crudConfig[entity];
+    const data = _crudDataCache[entity];
 
-      const func = obj.id === '' ? cfg.create : cfg.update;
-      gasRun(func, obj, res => {
-        btn.innerText = 'Simpan';
-        const message = res && typeof res === 'object' ? res.message || 'Operasi selesai.' : res;
-        showToast(message, res && res.success === false ? 'error' : 'success');
+    if (!data || !Array.isArray(data) || rowIndex >= data.length) {
+      showToast("Data tidak ditemukan. Refresh tabel dulu.", "error");
+      return;
+    }
+
+    const row = data[rowIndex];
+    document.getElementById(cfg.titleFormId).innerText =
+      "Edit " + capitalize(entity);
+    let i = 0;
+    for (const key in cfg.form) {
+      const val = row[i] !== undefined ? String(row[i]) : "";
+      setFieldValue(cfg.form[key], val);
+      i++;
+    }
+    document.getElementById(cfg.btnCancelId).classList.remove("hidden");
+  }
+
+  // ==========================================
+  // SIMPAN DATA
+  // ==========================================
+  function simpanData(entity) {
+    const cfg = crudConfig[entity];
+    const obj = {};
+    for (const key in cfg.form) {
+      obj[key] = getFieldValue(cfg.form[key]);
+    }
+    if (!obj.nama) return showToast("Nama wajib diisi!", "error");
+
+    const btn = document.getElementById(cfg.btnSaveId);
+    btn.innerText = "Menyimpan...";
+
+    const func = obj.id === "" ? cfg.create : cfg.update;
+    gasRun(
+      func,
+      obj,
+      (res) => {
+        btn.innerText = "Simpan";
+        const message =
+          res && typeof res === "object"
+            ? res.message || "Operasi selesai."
+            : res;
+        showToast(message, res && res.success === false ? "error" : "success");
         if (res && res.success !== false) {
           resetForm(entity);
           loadData(entity);
         }
-      }, err => {
-        btn.innerText = 'Simpan';
-        showToast('Gagal menyimpan: ' + (err && err.message ? err.message : err), 'error');
+      },
+      (err) => {
+        btn.innerText = "Simpan";
+        showToast(
+          "Gagal menyimpan: " + (err && err.message ? err.message : err),
+          "error",
+        );
+      },
+    );
+  }
+
+  // ==========================================
+  // EDIT DATA
+  // ==========================================
+  function editData(entity, ...values) {
+    const cfg = crudConfig[entity];
+    document.getElementById(cfg.titleFormId).innerText =
+      "Edit " + capitalize(entity);
+    let i = 0;
+    for (const key in cfg.form) {
+      setFieldValue(cfg.form[key], values[i++] || "");
+    }
+    document.getElementById(cfg.btnCancelId).classList.remove("hidden");
+  }
+
+  // ==========================================
+  // RESET FORM
+  // ==========================================
+  function resetForm(entity) {
+    const cfg = crudConfig[entity];
+    document.getElementById(cfg.titleFormId).innerText =
+      "Tambah " + capitalize(entity);
+    for (const key in cfg.form) {
+      setFieldValue(cfg.form[key], "");
+    }
+    document.getElementById(cfg.btnSaveId).innerText = "Simpan";
+    document.getElementById(cfg.btnCancelId).classList.add("hidden");
+  }
+
+  // ==========================================
+  // HAPUS DATA
+  // ==========================================
+  function hapusData(entity, id) {
+    const cfg = crudConfig[entity];
+    if (confirm("Hapus data ini?")) {
+      showToast("Menghapus...");
+      gasRun(
+        cfg.delete,
+        id,
+        (res) => {
+          const message =
+            res && typeof res === "object"
+              ? res.message || "Operasi selesai."
+              : res;
+          showToast(
+            message,
+            res && res.success === false ? "error" : "success",
+          );
+          if (res && res.success !== false) loadData(entity);
+        },
+        (err) => {
+          showToast(
+            "Gagal menghapus: " + (err && err.message ? err.message : err),
+            "error",
+          );
+        },
+      );
+    }
+  }
+
+  function loadDataSiswa() {
+    populateSiswaJurusanDropdown();  
+    loadData("siswa");
+  }
+  function simpanSiswa() {
+    simpanData("siswa");
+  }
+  function editSiswa() {
+    editData("siswa");
+  }
+  function resetFormSiswa() {
+    resetForm("siswa");
+  }
+  function hapusSiswa() {
+    hapusData("siswa");
+  }
+  renderForm("siswa");
+
+function loadDataJurusan() { loadData("jurusan"); }
+function simpanJurusan() { simpanData("jurusan"); }
+function editJurusan() { editData("jurusan"); }
+function resetFormJurusan() { resetForm("jurusan"); }
+function hapusJurusan() { hapusData("jurusan"); }
+
+
+
+function populateSiswaJurusanDropdown() {
+  google.script.run.withSuccessHandler(listMapel => {
+    const selectEl = document.getElementById('siswa_Jurusan');
+    if (!selectEl) return;
+    const currVal = selectEl.value;               // Simpan pilihan user sebelumnya
+
+    let html = '<option value="">-- Pilih Jurusan --</option>';
+    if (listMapel && listMapel.length > 0) {
+      listMapel.forEach(m => {
+        html += `<option value="${m.nama}">${m.nama} (${m.kode})</option>`;
       });
     }
+    selectEl.innerHTML = html;                    // Render ulang <select>
+    if (currVal) selectEl.value = currVal;        // Restore pilihan
+  }).getOptionsJurusan();                           // Panggil server
+}
+renderForm('jurusan');
 
-    // ==========================================
-    // EDIT DATA
-    // ==========================================
-    function editData(entity, ...values) {
-      const cfg = crudConfig[entity];
-      document.getElementById(cfg.titleFormId).innerText = 'Edit ' + capitalize(entity);
-      let i = 0;
-      for (const key in cfg.form) {
-        setFieldValue(cfg.form[key], values[i++] || '');
-      }
-      document.getElementById(cfg.btnCancelId).classList.remove('hidden');
-    }
-
-    // ==========================================
-    // RESET FORM
-    // ==========================================
-    function resetForm(entity) {
-      const cfg = crudConfig[entity];
-      document.getElementById(cfg.titleFormId).innerText = 'Tambah ' + capitalize(entity);
-      for (const key in cfg.form) {
-        setFieldValue(cfg.form[key], '');
-      }
-      document.getElementById(cfg.btnSaveId).innerText = 'Simpan';
-      document.getElementById(cfg.btnCancelId).classList.add('hidden');
-    }
-
-    // ==========================================
-    // HAPUS DATA
-    // ==========================================
-    function hapusData(entity, id) {
-      const cfg = crudConfig[entity];
-      if (confirm('Hapus data ini?')) {
-        showToast('Menghapus...');
-        gasRun(cfg.delete, id, res => {
-          const message = res && typeof res === 'object' ? res.message || 'Operasi selesai.' : res;
-          showToast(message, res && res.success === false ? 'error' : 'success');
-          if (res && res.success !== false) loadData(entity);
-        }, err => {
-          showToast('Gagal menghapus: ' + (err && err.message ? err.message : err), 'error');
-        });
-      }
-    }
-  </script>
-
+</script>
