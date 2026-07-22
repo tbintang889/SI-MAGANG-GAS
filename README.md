@@ -163,6 +163,8 @@ project-anda/
 │   └── getOptionsJurusan()      # Helper untuk dropdown relasi
 │
 ├── 📄 generate-crud.js          # CLI Generator CRUD (Node.js)
+├── 📄 starter.sh                # Script setup otomatis (Git Bash / WSL)
+├── 📄 starter.bat               # Script setup otomatis (Windows CMD)
 │
 ├── 📄 appsscript.json           # Manifest Apps Script
 │   ├── timeZone: "Asia/Jakarta"
@@ -229,19 +231,48 @@ project-anda/
 | **Clasp** | `npm install -g @google/clasp` |
 | **Code Editor** | VS Code (recommended) atau editor lainnya |
 
-### Langkah 1: Clone atau Copy Starter
+### ⚡ Cara Super Cepat: Jalankan Starter Script
+
+Template ini sudah include **2 starter script** yang akan mengotomatiskan langkah 1-8 secara interaktif:
+
+**Untuk Git Bash / WSL (Linux/Mac):**
+```bash
+# Dari folder template
+cd (FOLDER KAMU)
+bash starter.sh
+```
+
+**Untuk Windows CMD (Command Prompt):**
+```cmd
+:: Dari folder template
+cd /d D:\GAS\magang
+starter.bat
+```
+
+**Apa yang dilakukan starter script:**
+1. ✅ Memeriksa Node.js & Clasp
+2. ✅ Meminta nama project baru
+3. ✅ Menyalin semua file starter ke folder project baru
+4. ✅ Login ke Google via Clasp (jika belum)
+5. ✅ Membuat project Apps Script baru
+6. ✅ Push semua file ke Apps Script
+7. ✅ Menampilkan instruksi setup spreadsheet & deploy
+
+### Langkah Manual: Clone atau Copy Starter
+
+Jika tidak ingin menggunakan starter script, lakukan manual:
 
 ```bash
 # Copy starter ke folder project baru
-cp -r templates/default/starter/ D:/GAS/project-anda/
-cd D:/GAS/project-anda/
+cp -r templates/default/starter/ (FOLDER KAMU)/project-anda/
+cd (FOLDER KAMU)/project-anda/
 ```
 
 Atau jika menggunakan git:
 
 ```bash
-git clone <repo-url> D:/GAS/project-anda
-cd D:/GAS/project-anda
+git clone <repo-url> (FOLDER KAMU)/project-anda
+cd (FOLDER KAMU)/project-anda
 ```
 
 ### Langkah 2: Buat Google Sheets Database
@@ -648,7 +679,7 @@ Fungsi read (get) mengembalikan array 2 dimensi (array of arrays):
 
 ```bash
 # Pastikan berada di folder yang sama dengan generate-crud.js
-cd D:/GAS/siakad
+cd (FOLDER KAMU)/siakad
 
 # Generate entitas dengan 2 field default (nama, kode)
 node generate-crud.js Jurusan
