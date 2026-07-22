@@ -48,7 +48,7 @@
           el: "siswa_Jurusan",
           type: "dropdown",
           label: "Jurusan",
-          options: ["RPL", "PPLG"],
+          options:  ['-- Memuat Jurusan --'],
         },
         Sekolah: {
           el: "siswa_Sekolah",
@@ -463,6 +463,7 @@
   }
 
   function loadDataSiswa() {
+    populateSiswaJurusanDropdown();  
     loadData("siswa");
   }
   function simpanSiswa() {
@@ -484,6 +485,25 @@ function simpanJurusan() { simpanData("jurusan"); }
 function editJurusan() { editData("jurusan"); }
 function resetFormJurusan() { resetForm("jurusan"); }
 function hapusJurusan() { hapusData("jurusan"); }
+
+
+
+function populateSiswaJurusanDropdown() {
+  google.script.run.withSuccessHandler(listMapel => {
+    const selectEl = document.getElementById('siswa_Jurusan');
+    if (!selectEl) return;
+    const currVal = selectEl.value;               // Simpan pilihan user sebelumnya
+
+    let html = '<option value="">-- Pilih Jurusan --</option>';
+    if (listMapel && listMapel.length > 0) {
+      listMapel.forEach(m => {
+        html += `<option value="${m.nama}">${m.nama} (${m.kode})</option>`;
+      });
+    }
+    selectEl.innerHTML = html;                    // Render ulang <select>
+    if (currVal) selectEl.value = currVal;        // Restore pilihan
+  }).getOptionsJurusan();                           // Panggil server
+}
 renderForm('jurusan');
 
 </script>
