@@ -73,7 +73,7 @@ function resolveTemplatePath(filename) {
     'JavascriptDashboard': 'views/scripts/modules/dashboard/JavascriptDashboard',
     'JavascriptLaporan': 'views/scripts/modules/laporan/JavascriptLaporan',
     // >>> Tambahkan mapping view entitas baru di sini <<<
-    // Contoh: 'BarangView': 'views/modules/BarangView',
+   
   };
   return map[filename] || filename;
 }
