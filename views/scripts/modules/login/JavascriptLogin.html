@@ -1,0 +1,37 @@
+  <script>
+    // ==========================================
+    // LOGIN / LOGOUT
+    // ==========================================
+    function prosesLogin() {
+      const u = document.getElementById('username').value;
+      const p = document.getElementById('password').value;
+      if (!u || !p) return showToast('Isi username & password!', 'error');
+
+      document.getElementById('btnLogin').innerText = 'Loading...';
+      gasRun('checkLogin', { username: u, password: p }, res => {
+        document.getElementById('btnLogin').innerText = 'Masuk';
+        if (res.success) {
+          document.getElementById('viewLogin').classList.add('hidden');
+          document.getElementById('viewDashboard').classList.remove('hidden');
+          showToast(res.message);
+          pindahMenu('dashboard');
+        } else {
+          showToast(res.message, 'error');
+        }
+      }, err => {
+        document.getElementById('btnLogin').innerText = 'Masuk';
+        showToast('Login gagal: ' + (err && err.message ? err.message : err), 'error');
+      });
+    }
+
+    function prosesLogout() {
+      document.getElementById('viewDashboard').classList.add('hidden');
+      document.getElementById('viewLogin').classList.remove('hidden');
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+    }
+
+    window.prosesLogin = prosesLogin;
+    window.prosesLogout = prosesLogout;
+  </script>
+

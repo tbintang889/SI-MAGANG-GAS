@@ -1,0 +1,53 @@
+  <script>
+    // ==========================================
+    // REGISTRY MENU & NAVIGASI
+    // ==========================================
+    const menuRegistry = {
+      dashboard: {
+        title: '🏠 Dashboard Aplikasi',
+        loader: () => typeof loadDataDashboard === 'function' && loadDataDashboard()
+      }
+      // >>> Entitas CRUD baru akan ditambahkan otomatis di sini oleh generator <<<
+    };
+
+    function registerMenu(menuKey, config) {
+      menuRegistry[menuKey] = config;
+    }
+
+    function pindahMenu(menu) {
+      const cfg = menuRegistry[menu];
+
+      // Sembunyikan semua modul
+      Object.keys(menuRegistry).forEach(mKey => {
+        const modulEl = document.getElementById('modul' + capitalize(mKey));
+        const btnEl = document.getElementById('menu' + capitalize(mKey) + 'Btn');
+        if (modulEl) modulEl.classList.add('hidden');
+        if (btnEl) {
+          btnEl.className = 'w-full text-left px-4 py-3 rounded-lg hover:bg-slate-800 text-slate-300 transition-colors';
+        }
+      });
+
+      // Tampilkan modul aktif
+      const activeModul = document.getElementById('modul' + capitalize(menu));
+      const activeBtn = document.getElementById('menu' + capitalize(menu) + 'Btn');
+      if (activeModul) activeModul.classList.remove('hidden');
+      if (activeBtn) {
+        activeBtn.className = 'w-full text-left px-4 py-3 rounded-lg bg-blue-600 text-white font-medium shadow-sm transition-colors';
+      }
+
+      // Update judul header
+      const headerTitle = document.getElementById('headerTitle');
+      if (headerTitle && cfg) {
+        headerTitle.innerText = cfg.title || ('Manajemen Data ' + capitalize(menu));
+      }
+
+      // Jalankan loader
+      if (cfg && typeof cfg.loader === 'function') {
+        cfg.loader();
+      }
+    }
+
+    window.registerMenu = registerMenu;
+    window.pindahMenu = pindahMenu;
+  </script>
+

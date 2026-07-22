@@ -1,0 +1,116 @@
+  <script>
+    // ==========================================
+    // DASHBOARD - CHART INSTANCES
+    // ==========================================
+    let chart1Inst = null;
+    let chart2Inst = null;
+
+    // ==========================================
+    // LOAD DASHBOARD DATA
+    // ==========================================
+    function loadDataDashboard() {
+      google.script.run.withSuccessHandler(renderDashboard).getDashboardSummary();
+    }
+
+    function renderDashboard(res) {
+      if (!res) return;
+
+      // Update KPI Cards
+      document.getElementById('dashKpi1').innerText = res.kpi?.total1 || 0;
+      document.getElementById('dashKpi2').innerText = res.kpi?.total2 || 0;
+      document.getElementById('dashKpi3').innerText = res.kpi?.total3 || 0;
+      document.getElementById('dashKpi4').innerText = res.kpi?.avg || 0;
+
+      // Render Charts
+      renderChart1(res.chart1Data);
+      renderChart2(res.chart2Data);
+
+      // Render Recent Data
+      renderRecentData(res.recentData);
+    }
+
+    // ==========================================
+    // RENDER CHART 1 (Doughnut)
+    // ==========================================
+    function renderChart1(dataObj) {
+      const ctx = document.getElementById('chart1');
+      if (!ctx) return;
+      if (chart1Inst) chart1Inst.destroy();
+
+      const labels = Object.keys(dataObj || {});
+      const values = Object.values(dataObj || {});
+
+      chart1Inst = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels.length > 0 ? labels : ['Belum ada data'],
+          datasets: [{
+            data: values.length > 0 ? values : [1],
+            backgroundColor: ['#3b82f6', '#6366f1', '#10b981', '#f59e0b', '#ec4899'],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+
+    // ==========================================
+    // RENDER CHART 2 (Bar)
+    // ==========================================
+    function renderChart2(dataArr) {
+      const ctx = document.getElementById('chart2');
+      if (!ctx) return;
+      if (chart2Inst) chart2Inst.destroy();
+
+      const labels = (dataArr || []).map(item => item.label);
+      const values = (dataArr || []).map(item => item.value);
+
+      chart2Inst = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels.length > 0 ? labels : ['Belum ada data'],
+          datasets: [{
+            label: 'Nilai',
+            data: values.length > 0 ? values : [0],
+            backgroundColor: '#3b82f6',
+            borderRadius: 8,
+            maxBarThickness: 40
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    // ==========================================
+    // RENDER RECENT DATA
+    // ==========================================
+    function renderRecentData(dataList) {
+      const tbody = document.getElementById('dashRecentData');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (!dataList || dataList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="py-4 text-center text-slate-400">Belum ada data.</td></tr>';
+        return;
+      }
+
+      dataList.forEach(item => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="py-2.5 px-3">${item.kolom1 || '-'}</td>
+            <td class="py-2.5 px-3">${item.kolom2 || '-'}</td>
+            <td class="py-2.5 px-3">${item.kolom3 || '-'}</td>
+          </tr>`;
+      });
+    }
+  </script>
+

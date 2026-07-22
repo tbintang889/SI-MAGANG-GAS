@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <?!= include('Head'); ?>
+</head>
+<body class="bg-gray-100 text-gray-800 h-screen w-screen overflow-hidden">
+
+  <div id="globalToast" class="fixed top-5 right-5 px-6 py-3 rounded shadow-lg text-white font-semibold transition-all duration-300 hidden z-50"></div>
+
+  <?!= include('Login'); ?>
+
+  <div id="viewDashboard" class="hidden flex h-full w-full bg-gray-50">
+    <?!= include('Aside'); ?>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+      <header class="bg-white shadow-sm border-b px-8 py-4">
+        <h3 id="headerTitle" class="text-xl font-semibold text-slate-800">Dashboard</h3>
+      </header>
+
+      <div class="flex-1 p-8 overflow-y-auto">
+        <?!= include('dashboardView'); ?>
+        <!-- >>> Tambahkan include view entitas baru di sini <<< -->
+        <!-- Contoh: <?!= include('BarangView'); ?> -->
+      </div>
+    </main>
+  </div>
+
+  <?!= include('Javascript'); ?>
+</body>
+</html>
+

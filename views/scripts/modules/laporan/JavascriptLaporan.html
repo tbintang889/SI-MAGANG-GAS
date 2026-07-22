@@ -1,0 +1,56 @@
+  <script>
+    // ==========================================
+    // LAPORAN - READ ONLY
+    // ==========================================
+    let rawLaporanData = [];
+
+    function loadDataLaporan() {
+      const tbody = document.getElementById('tabelLaporan');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-500">Memuat data laporan...</td></tr>';
+
+      gasRun('getLaporan', {}, res => {
+        if (!res) return;
+        rawLaporanData = res.data || [];
+        populateFilterLaporanOptions(res.filterOptions);
+        renderLaporanTable(rawLaporanData);
+      });
+    }
+
+    function populateFilterLaporanOptions(opts) {
+      if (!opts) return;
+      // Sesuaikan dengan filter yang ada di view laporan
+      // Contoh: isi dropdown filter
+    }
+
+    function renderLaporanTable(dataList) {
+      const tbody = document.getElementById('tabelLaporan');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (!dataList || dataList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-500">Data tidak ditemukan.</td></tr>';
+        return;
+      }
+
+      dataList.forEach((item, index) => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50 border-b">
+            <td class="py-3 px-4 text-center">${index + 1}</td>
+            <td class="py-3 px-4">${item.kolom1 || '-'}</td>
+            <td class="py-3 px-4">${item.kolom2 || '-'}</td>
+            <td class="py-3 px-4">${item.kolom3 || '-'}</td>
+          </tr>`;
+      });
+    }
+
+    function applyFilterLaporan() {
+      // Filter data berdasarkan pilihan user
+      renderLaporanTable(rawLaporanData);
+    }
+
+    function resetFilterLaporan() {
+      // Reset semua filter
+      renderLaporanTable(rawLaporanData);
+    }
+  </script>
+

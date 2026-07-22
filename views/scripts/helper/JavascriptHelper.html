@@ -1,0 +1,36 @@
+<script>
+  // ==========================================
+  // UTILITAS GLOBAL
+  // ==========================================
+  function showToast(msg, type = 'success') {
+    const toast = document.getElementById('globalToast');
+    if (!toast) return;
+    toast.innerText = msg;
+    toast.className = `fixed top-5 right-5 px-6 py-3 rounded shadow-lg text-white font-semibold z-50 fade-in ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+    toast.classList.remove('hidden');
+    setTimeout(() => toast.classList.add('hidden'), 3000);
+  }
+
+  function gasRun(fnName, args, onSuccess, onError) {
+    const successHandler = typeof onSuccess === 'function' ? onSuccess : () => {};
+    const errorHandler = typeof onError === 'function'
+      ? onError
+      : (err) => showToast('Terjadi kesalahan: ' + (err && err.message ? err.message : err), 'error');
+
+    const runner = google.script.run.withSuccessHandler(successHandler).withFailureHandler(errorHandler);
+    if (Array.isArray(args)) {
+      runner[fnName](...args);
+    } else {
+      runner[fnName](args);
+    }
+  }
+
+  function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  window.showToast = showToast;
+  window.gasRun = gasRun;
+  window.capitalize = capitalize;
+</script>
+

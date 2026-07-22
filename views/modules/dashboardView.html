@@ -1,0 +1,64 @@
+<!-- ========================================== -->
+<!-- MODUL: DASHBOARD                          -->
+<!-- ========================================== -->
+<div id="modulDashboard" class="fade-in space-y-6">
+
+  <!-- Welcome Banner -->
+  <div class="bg-gradient-to-r from-slate-900 via-indigo-900 to-blue-900 rounded-2xl p-6 sm:p-8 text-white shadow-xl">
+    <h2 class="text-2xl sm:text-3xl font-bold">Selamat Datang!</h2>
+    <p class="text-slate-300 text-sm mt-1.5">Dashboard aplikasi Anda.</p>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <div class="bg-white p-6 rounded-2xl border shadow-sm">
+      <p class="text-xs font-semibold uppercase text-slate-400">Total Data 1</p>
+      <h3 id="dashKpi1" class="text-3xl font-bold text-slate-800 mt-1">0</h3>
+    </div>
+    <div class="bg-white p-6 rounded-2xl border shadow-sm">
+      <p class="text-xs font-semibold uppercase text-slate-400">Total Data 2</p>
+      <h3 id="dashKpi2" class="text-3xl font-bold text-slate-800 mt-1">0</h3>
+    </div>
+    <div class="bg-white p-6 rounded-2xl border shadow-sm">
+      <p class="text-xs font-semibold uppercase text-slate-400">Total Data 3</p>
+      <h3 id="dashKpi3" class="text-3xl font-bold text-slate-800 mt-1">0</h3>
+    </div>
+    <div class="bg-white p-6 rounded-2xl border shadow-sm">
+      <p class="text-xs font-semibold uppercase text-slate-400">Rata-Rata</p>
+      <h3 id="dashKpi4" class="text-3xl font-bold text-emerald-600 mt-1">0</h3>
+    </div>
+  </div>
+
+  <!-- Charts Area -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white p-6 rounded-2xl border shadow-sm">
+      <h4 class="text-base font-bold text-slate-800 mb-4">🍩 Chart 1</h4>
+      <div class="relative h-64"><canvas id="chart1"></canvas></div>
+    </div>
+    <div class="bg-white p-6 rounded-2xl border shadow-sm">
+      <h4 class="text-base font-bold text-slate-800 mb-4">📊 Chart 2</h4>
+      <div class="relative h-64"><canvas id="chart2"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Recent Data -->
+  <div class="bg-white p-6 rounded-2xl border shadow-sm">
+    <h4 class="text-base font-bold text-slate-800 mb-4">🕒 Data Terbaru</h4>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold">
+          <tr>
+            <th class="py-2.5 px-3">Kolom 1</th>
+            <th class="py-2.5 px-3">Kolom 2</th>
+            <th class="py-2.5 px-3">Kolom 3</th>
+          </tr>
+        </thead>
+        <tbody id="dashRecentData" class="divide-y divide-slate-100 text-sm">
+          <tr><td colspan="3" class="py-4 text-center text-slate-400">Belum ada data.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+

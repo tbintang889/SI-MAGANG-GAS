@@ -1,0 +1,11 @@
+**/**
+!**.js
+!**.gs
+!**.html
+!appsscript.json
+!**/modules/**
+!**/helper/**
+!**/core/**
+!**/layout/**
+!**/auth/**
+
