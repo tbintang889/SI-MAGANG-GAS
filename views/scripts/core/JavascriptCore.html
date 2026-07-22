@@ -8,6 +8,11 @@
         loader: () => typeof loadDataDashboard === 'function' && loadDataDashboard()
       }
       // >>> Entitas CRUD baru akan ditambahkan otomatis di sini oleh generator <<<
+  , 
+  siswa: {
+    title: "Manajemen Data Siswa",
+    loader: () => typeof loadDataSiswa === "function" && loadDataSiswa()
+  }
     };
 
     function registerMenu(menuKey, config) {
