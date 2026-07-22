@@ -106,7 +106,28 @@
         { label: "TanggalSurat", key: 9 },
       ],
     },
-  };
+  
+    pembimbing: {
+    formWrapperId: "formPembimbing",
+    tableId: "tabelPembimbing",
+    titleFormId: "titleFormPembimbing",
+    form: {
+        id:   { el: "pembimbing_id", type: "hidden" },
+        nama: { el: "pembimbing_nama", type: "text", label: "Nama", placeholder: "Nama Pembimbing" },
+        kode: { el: "pembimbing_kode", type: "text", label: "Kode", placeholder: "Kode Pembimbing" }
+    },
+    btnSaveId: "btnSimpanPembimbing",
+    btnCancelId: "btnBatalPembimbing",
+    loader: ["getPembimbing"],
+    create: "createPembimbing",
+    update: "updatePembimbing",
+    delete: "deletePembimbing",
+    tableColumns: [
+        { label: "ID", key: 0 },
+        { label: "Nama", key: 1 },
+        { label: "Kode", key: 2 }
+    ]
+  }};
 
   // ==========================================
   // RENDER FORM
@@ -505,5 +526,13 @@ function populateSiswaJurusanDropdown() {
   }).getOptionsJurusan();                           // Panggil server
 }
 renderForm('jurusan');
+
+
+function loadDataPembimbing() { loadData("pembimbing"); }
+function simpanPembimbing() { simpanData("pembimbing"); }
+function editPembimbing() { editData("pembimbing"); }
+function resetFormPembimbing() { resetForm("pembimbing"); }
+function hapusPembimbing() { hapusData("pembimbing"); }
+renderForm('pembimbing');
 
 </script>
