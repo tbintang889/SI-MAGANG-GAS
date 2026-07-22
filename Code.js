@@ -93,6 +93,7 @@ function resolveTemplatePath(filename) {
     // >>> Tambahkan mapping view entitas baru di sini <<<
     'JurusanView': 'views/modules/JurusanView',
     'SiswaView': 'views/modules/SiswaView',
+    'PembimbingView': 'views/modules/PembimbingView',
    
   };
   return map[filename] || filename;
@@ -133,4 +134,3 @@ function checkLogin(username, password) {
     return buildResult(false, 'Error: ' + e.message);
   }
 }
-
