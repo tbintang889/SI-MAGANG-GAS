@@ -9,6 +9,11 @@
       }
       // >>> Entitas CRUD baru akan ditambahkan otomatis di sini oleh generator <<<
   , 
+  jurusan: {
+    title: "Manajemen Data Jurusan",
+    loader: () => typeof loadDataJurusan === "function" && loadDataJurusan()
+  }
+  , 
   siswa: {
     title: "Manajemen Data Siswa",
     loader: () => typeof loadDataSiswa === "function" && loadDataSiswa()

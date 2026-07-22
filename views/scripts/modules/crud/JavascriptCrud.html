@@ -4,6 +4,28 @@
   // ==========================================
   const crudConfig = {
     // >>> Entitas CRUD akan ditambahkan di sini oleh generate-crud.js <<<
+  
+  jurusan: {
+    formWrapperId: "formJurusan",
+    tableId: "tabelJurusan",
+    titleFormId: "titleFormJurusan",
+    form: {
+        id:   { el: "jurusan_id", type: "hidden" },
+        nama: { el: "jurusan_nama", type: "text", label: "Nama", placeholder: "Nama Jurusan" },
+        kode: { el: "jurusan_kode", type: "text", label: "Kode", placeholder: "Kode Jurusan" }
+    },
+    btnSaveId: "btnSimpanJurusan",
+    btnCancelId: "btnBatalJurusan",
+    loader: ["getJurusan"],
+    create: "createJurusan",
+    update: "updateJurusan",
+    delete: "deleteJurusan",
+    tableColumns: [
+        { label: "ID", key: 0 },
+        { label: "Nama", key: 1 },
+        { label: "Kode", key: 2 }
+    ]
+  },
     siswa: {
       formWrapperId: "formSiswa",
       tableId: "tabelSiswa",
@@ -456,4 +478,12 @@
     hapusData("siswa");
   }
   renderForm("siswa");
+
+function loadDataJurusan() { loadData("jurusan"); }
+function simpanJurusan() { simpanData("jurusan"); }
+function editJurusan() { editData("jurusan"); }
+function resetFormJurusan() { resetForm("jurusan"); }
+function hapusJurusan() { hapusData("jurusan"); }
+renderForm('jurusan');
+
 </script>
