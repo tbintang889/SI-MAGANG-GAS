@@ -112,7 +112,68 @@ if (!options.fields) {
 // 2. PARSE FIELD DEFINITIONS
 // ==========================================
 function parseFields(fieldsStr) {
-  return fieldsStr.split(',').map(function(fieldDef) {
+  // Sequential parser that properly handles option lists with commas
+  // Strategy: find each field by pattern `word:knownType`, then for radio/dropdown
+  // consume everything until the next `word:knownType` pattern
+  var knownTypes = ['text', 'number', 'email', 'textarea', 'radio', 'dropdown'];
+  var tokens = [];
+  var i = 0;
+
+  while (i < fieldsStr.length) {
+    // Match field start: word:knownType
+    var match = null;
+    for (var ti = 0; ti < knownTypes.length; ti++) {
+      var kt = knownTypes[ti];
+      var re = new RegExp('^(\\w+):' + kt);
+      var m = fieldsStr.substring(i).match(re);
+      if (m) {
+        match = m;
+        break;
+      }
+    }
+
+    if (!match) {
+      // No valid field found; skip ahead to next comma
+      var nextComma = fieldsStr.indexOf(',', i);
+      if (nextComma === -1) break;
+      i = nextComma + 1;
+      continue;
+    }
+
+    var fullMatch = match[0];
+    var name = match[1];
+    var type = knownTypes[knownTypes.indexOf(fullMatch.split(':')[1])];
+    
+    var token = name + ':' + type;
+    i += fullMatch.length;
+
+    // For radio/dropdown, collect options until next field starts
+    if (type === 'radio' || type === 'dropdown') {
+      if (i < fieldsStr.length && fieldsStr[i] === ':') {
+        i++; // skip ':'
+        var optStart = i;
+        while (i < fieldsStr.length) {
+          // Look ahead for ",word:knownType" pattern = next field
+          var nextFieldMatch = fieldsStr.substring(i).match(/^,(\w+):(text|number|email|textarea|radio|dropdown)/);
+          if (nextFieldMatch) {
+            break;
+          }
+          i++;
+        }
+        token += ':' + fieldsStr.substring(optStart, i);
+      }
+    }
+
+    tokens.push(token);
+
+    // Skip trailing comma
+    if (i < fieldsStr.length && fieldsStr[i] === ',') {
+      i++;
+    }
+  }
+
+  // Now parse each token into structured data
+  return tokens.map(function(fieldDef) {
     var parts = fieldDef.split(':');
     var name = parts[0];
     var type = parts[1] || 'text';
@@ -122,7 +183,7 @@ function parseFields(fieldsStr) {
     
     if (type === 'dropdown' || type === 'radio') {
       if (parts[2]) {
-        fieldOptions = parts.slice(2).join(',').split(',');
+        fieldOptions = parts.slice(2).join(':').split(',');
       } else {
         fieldOptions = ['-- Pilih --'];
       }
