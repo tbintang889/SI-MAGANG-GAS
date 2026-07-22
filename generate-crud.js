@@ -460,7 +460,7 @@ function checkExistingFiles() {
 }
 
 // ==========================================
-// 6. READ & UPDATE EXISTING FILES
+// 6. READ & UPDATE EXISTING FILES (ROBUST)
 // ==========================================
 
 function readFileSafe(filePath) {
@@ -472,46 +472,157 @@ function readFileSafe(filePath) {
   }
 }
 
-function updateCrudConfig(content) {
-  var entry = generateCrudConfigEntry();
-  // Use the comment marker as insertion point
-  var marker = '// >>> Entitas CRUD akan ditambahkan di sini oleh generate-crud.js <<<';
-  var markerIndex = content.indexOf(marker);
-  if (markerIndex === -1) {
-    console.error('Tidak dapat menemukan marker crudConfig di JavascriptCrud.html');
+// --- Utility: safely insert a new property into a JavaScript object literal ---
+function insertIntoObjectLiteral(content, startPattern, newEntry, endPattern) {
+  // Find start of object
+  var startIdx = content.indexOf(startPattern);
+  if (startIdx === -1) {
+    console.error('Tidak dapat menemukan "' + startPattern + '"');
     return null;
   }
-  var insertPos = markerIndex + marker.length;
-  // Insert comma AFTER the comment line ends (not on the // line, which would comment it out)
-  return content.slice(0, insertPos) + '\n  , \n' + entry + content.slice(insertPos);
+  // Find matching closing brace
+  var braceCount = 0;
+  var endIdx = -1;
+  var searchStart = startIdx + startPattern.length;
+  for (var i = searchStart; i < content.length; i++) {
+    var ch = content[i];
+    if (ch === '{') braceCount++;
+    else if (ch === '}') {
+      if (braceCount === 0) {
+        endIdx = i;
+        break;
+      }
+      braceCount--;
+    }
+  }
+  if (endIdx === -1) {
+    console.error('Tidak dapat menemukan penutup "}" untuk objek');
+    return null;
+  }
+  
+  var before = content.substring(0, startIdx + startPattern.length);
+  var inside = content.substring(startIdx + startPattern.length, endIdx);
+  var after = content.substring(endIdx);
+  
+  // Trim whitespace and check if inside is empty or only whitespace
+  var trimmedInside = inside.trim();
+  var newInside;
+  if (trimmedInside === '') {
+    // No existing properties, just add new entry without comma
+    newInside = '\n  ' + newEntry + '\n';
+  } else {
+    // Check if the last non-whitespace character inside is a comma
+    var lastNonWS = inside.replace(/\s+$/, '');
+    if (lastNonWS[lastNonWS.length - 1] === ',') {
+      // Already has trailing comma, just add new entry
+      newInside = inside + '\n  ' + newEntry;
+    } else {
+      // Need to add comma before new entry
+      newInside = inside + ',\n  ' + newEntry;
+    }
+  }
+  
+  return before + newInside + after;
+}
+
+// --- Specific updaters using the utility ---
+function updateCrudConfig(content) {
+  var entry = generateCrudConfigEntry();
+  return insertIntoObjectLiteral(content, 'crudConfig = {', entry, '}');
+}
+
+function updateMenuRegistry(content) {
+  var entry = generateMenuRegistryEntry();
+  return insertIntoObjectLiteral(content, 'menuRegistry = {', entry, '}');
+}
+
+function addCodeJsMapping(content) {
+  // Code.js has an object named 'views' inside getView function or similar.
+  // We'll assume it's a simple object literal with property mappings.
+  // We'll use a marker approach as before but with the robust insertion.
+  var entry = generateCodeJsMapping();
+  // We'll find the views object using a marker comment
+  var marker = '// >>> Tambahkan mapping view entitas baru di sini <<<';
+  var markerIdx = content.indexOf(marker);
+  if (markerIdx === -1) {
+    console.error('Tidak dapat menemukan marker mapping di Code.js');
+    return null;
+  }
+  // After the marker, we assume there is an object or a list of properties.
+  // We'll use insertIntoObjectLiteral with a pattern.
+  // Actually, it's easier to just insert after the marker with a newline.
+  // But to be safe, we can search for the 'views = {' or similar.
+  // Since the marker is inside the views object, we can use that.
+  // Let's just insert the new mapping after the marker with proper comma handling.
+  // We'll find the end of the views object.
+  var viewsStart = content.indexOf('views = {', markerIdx);
+  if (viewsStart === -1) {
+    console.error('Tidak dapat menemukan "views = {" di Code.js');
+    return null;
+  }
+  // Use the same insertion logic but with a custom pattern.
+  // Since we already have the marker, we can just insert the new mapping before the closing brace of views.
+  // Let's find the matching brace of views.
+  var braceCount = 0;
+  var endViews = -1;
+  for (var i = viewsStart + 'views = {'.length; i < content.length; i++) {
+    if (content[i] === '{') braceCount++;
+    else if (content[i] === '}') {
+      if (braceCount === 0) {
+        endViews = i;
+        break;
+      }
+      braceCount--;
+    }
+  }
+  if (endViews === -1) {
+    console.error('Tidak dapat menemukan penutup "}" untuk views di Code.js');
+    return null;
+  }
+  var beforeViews = content.substring(0, viewsStart + 'views = {'.length);
+  var insideViews = content.substring(viewsStart + 'views = {'.length, endViews);
+  var afterViews = content.substring(endViews);
+  
+  // Insert new entry with comma handling
+  var trimmedInside = insideViews.trim();
+  var newInside;
+  if (trimmedInside === '') {
+    newInside = '\n  ' + entry + '\n';
+  } else {
+    var lastNonWS = insideViews.replace(/\s+$/, '');
+    if (lastNonWS[lastNonWS.length - 1] === ',') {
+      newInside = insideViews + '\n  ' + entry;
+    } else {
+      newInside = insideViews + ',\n  ' + entry;
+    }
+  }
+  return beforeViews + newInside + afterViews;
 }
 
 function addWrapperFunctions(content) {
   var funcs = generateWrapperFunctions();
+  // Insert before </script>
   var match = content.lastIndexOf('</script>');
   if (match === -1) {
     console.error('Tidak dapat menemukan </script> di JavascriptCrud.html');
     return null;
   }
-  return content.slice(0, match) + '\n' + funcs + '\n' + content.slice(match);
-}
-
-function updateMenuRegistry(content) {
-  var entry = generateMenuRegistryEntry();
-  // Use the comment marker as insertion point
-  var marker = '// >>> Entitas CRUD baru akan ditambahkan otomatis di sini oleh generator <<<';
-  var markerIndex = content.indexOf(marker);
-  if (markerIndex === -1) {
-    console.error('Tidak dapat menemukan marker menuRegistry di JavascriptCore.html');
-    return null;
+  // Avoid duplicate functions? We'll just append.
+  // Check if already exists (simple check)
+  if (content.indexOf('loadData' + entityCapital) !== -1) {
+    console.warn('Fungsi untuk ' + entityCapital + ' sudah ada, dilewati.');
+    return content;
   }
-  var insertPos = markerIndex + marker.length;
-  // Insert comma AFTER the comment line ends (not on the // line, which would comment it out)
-  return content.slice(0, insertPos) + '\n  , \n' + entry + content.slice(insertPos);
+  return content.slice(0, match) + '\n' + funcs + '\n' + content.slice(match);
 }
 
 function addSidebarButton(content) {
   var btn = generateSidebarButton();
+  // Check if already exists
+  if (content.indexOf('menu' + entityCapital + 'Btn') !== -1) {
+    console.warn('Tombol sidebar untuk ' + entityCapital + ' sudah ada, dilewati.');
+    return content;
+  }
   var match = content.lastIndexOf('</nav>');
   if (match === -1) {
     console.error('Tidak dapat menemukan </nav> di Aside.html');
@@ -522,31 +633,19 @@ function addSidebarButton(content) {
 
 function addIncludeLine(content) {
   var line = generateIncludeLine();
-  var modulIncludes = content.match(/<?!= include\('[A-Za-z]+View'\); ?>/g);
-  if (!modulIncludes) {
-    var match = content.match(/(\s*)(<\/div>\s*\n\s*<\/main>)/);
-    if (!match) {
-      console.error('Tidak dapat menemukan posisi include di Index.html');
-      return null;
-    }
-    return content.slice(0, match.index) + line + '\n' + content.slice(match.index);
+  // Check if already exists
+  if (content.indexOf('include(\'' + entityCapital + 'View\')') !== -1) {
+    console.warn('Include untuk ' + entityCapital + 'View sudah ada, dilewati.');
+    return content;
   }
-  var lastInclude = modulIncludes[modulIncludes.length - 1];
-  var lastPos = content.lastIndexOf(lastInclude) + lastInclude.length;
-  return content.slice(0, lastPos) + '\n' + line + content.slice(lastPos);
-}
-
-function addCodeJsMapping(content) {
-  var mapping = generateCodeJsMapping();
-  // Use the comment marker as insertion point
-  var marker = '// >>> Tambahkan mapping view entitas baru di sini <<<';
-  var markerIndex = content.indexOf(marker);
-  if (markerIndex === -1) {
-    console.error('Tidak dapat menemukan marker mapping di Code.js');
+  // Find position: either before </main> or after last include
+  var mainClose = content.lastIndexOf('</main>');
+  if (mainClose === -1) {
+    console.error('Tidak dapat menemukan </main> di Index.html');
     return null;
   }
-  var insertPos = markerIndex + marker.length;
-  return content.slice(0, insertPos) + '\n' + mapping + content.slice(insertPos);
+  // Insert before </main>
+  return content.slice(0, mainClose) + '\n' + line + '\n' + content.slice(mainClose);
 }
 
 // ==========================================
@@ -733,3 +832,6 @@ console.log('  5. Deploy ulang web app');
 console.log('');
 }
 
+// ==========================================
+// END OF GENERATOR
+// ==========================================
