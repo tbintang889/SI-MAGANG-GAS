@@ -1,6 +1,6 @@
 /**
  * ==========================================
- * SIAKAD CRUD GENERATOR CLI
+ * SIAKAD CRUD GENERATOR CLI (FIXED)
  * ==========================================
  * 
  * Penggunaan:
@@ -15,7 +15,6 @@
  *   --fields   Daftar field format: nama:type:options (pisah dengan koma)
  *              type: text, number, email, textarea, radio, dropdown
  *              options: untuk radio/dropdown, pisah dengan koma (setelah ':')
- *              Contoh: --fields nama:text,kelas:radio:XI,XII,jurusan:dropdown:RPL,PPLG,TKJ
  *   --prefix   Prefix ID (default: huruf pertama entity + UR, misal JUR)
  *   --icon     Icon untuk sidebar (default: clipboard)
  *   --title    Judul menu (default: "Manajemen Data {Entity}")
@@ -25,7 +24,6 @@
  * ==========================================
  */
 
-// Guard: prevent execution in non-Node.js environments (e.g. Google Apps Script)
 if (typeof require === 'undefined' || typeof module === 'undefined') {
   // Running in GAS or browser; do nothing
 } else {
@@ -100,7 +98,7 @@ for (let i = 1; i < args.length; i++) {
   }
 }
 
-// Default fields if not specified
+// Default fields
 if (!options.fields) {
   options.fields = [
     { name: 'nama', type: 'text', placeholder: 'Nama ' + entityCapital, options: null },
@@ -112,15 +110,11 @@ if (!options.fields) {
 // 2. PARSE FIELD DEFINITIONS
 // ==========================================
 function parseFields(fieldsStr) {
-  // Sequential parser that properly handles option lists with commas
-  // Strategy: find each field by pattern `word:knownType`, then for radio/dropdown
-  // consume everything until the next `word:knownType` pattern
   var knownTypes = ['text', 'number', 'email', 'textarea', 'radio', 'dropdown'];
   var tokens = [];
   var i = 0;
 
   while (i < fieldsStr.length) {
-    // Match field start: word:knownType
     var match = null;
     for (var ti = 0; ti < knownTypes.length; ti++) {
       var kt = knownTypes[ti];
@@ -133,7 +127,6 @@ function parseFields(fieldsStr) {
     }
 
     if (!match) {
-      // No valid field found; skip ahead to next comma
       var nextComma = fieldsStr.indexOf(',', i);
       if (nextComma === -1) break;
       i = nextComma + 1;
@@ -143,21 +136,16 @@ function parseFields(fieldsStr) {
     var fullMatch = match[0];
     var name = match[1];
     var type = knownTypes[knownTypes.indexOf(fullMatch.split(':')[1])];
-    
     var token = name + ':' + type;
     i += fullMatch.length;
 
-    // For radio/dropdown, collect options until next field starts
     if (type === 'radio' || type === 'dropdown') {
       if (i < fieldsStr.length && fieldsStr[i] === ':') {
-        i++; // skip ':'
+        i++;
         var optStart = i;
         while (i < fieldsStr.length) {
-          // Look ahead for ",word:knownType" pattern = next field
           var nextFieldMatch = fieldsStr.substring(i).match(/^,(\w+):(text|number|email|textarea|radio|dropdown)/);
-          if (nextFieldMatch) {
-            break;
-          }
+          if (nextFieldMatch) break;
           i++;
         }
         token += ':' + fieldsStr.substring(optStart, i);
@@ -165,22 +153,15 @@ function parseFields(fieldsStr) {
     }
 
     tokens.push(token);
-
-    // Skip trailing comma
-    if (i < fieldsStr.length && fieldsStr[i] === ',') {
-      i++;
-    }
+    if (i < fieldsStr.length && fieldsStr[i] === ',') i++;
   }
 
-  // Now parse each token into structured data
   return tokens.map(function(fieldDef) {
     var parts = fieldDef.split(':');
     var name = parts[0];
     var type = parts[1] || 'text';
-    
     var fieldOptions = null;
     var placeholder = name.charAt(0).toUpperCase() + name.slice(1);
-    
     if (type === 'dropdown' || type === 'radio') {
       if (parts[2]) {
         fieldOptions = parts.slice(2).join(':').split(',');
@@ -194,7 +175,6 @@ function parseFields(fieldsStr) {
     } else if (type === 'textarea') {
       placeholder = 'Masukkan ' + name;
     }
-    
     return { name: name, type: type, placeholder: placeholder, options: fieldOptions };
   });
 }
@@ -203,39 +183,29 @@ function parseFields(fieldsStr) {
 // 3. GENERATE FILE CONTENTS
 // ==========================================
 
-// --- SERVER-SIDE FILE (e.g. Jurusan.js) ---
 function generateServerFile() {
   var fields = options.fields;
-  
   var headers = ['ID'];
   fields.forEach(function(f) {
     var label = f.name.charAt(0).toUpperCase() + f.name.slice(1);
     headers.push(label);
   });
-  
   var colMappings = fields.map(function(f, i) {
     var colIndex = i + 2;
-    var fieldName = f.name;
-    return 'sheet.getRange(rowIndex, ' + colIndex + ').setValue(String(obj.' + fieldName + ' || "").trim());';
+    return 'sheet.getRange(rowIndex, ' + colIndex + ').setValue(String(obj.' + f.name + ' || "").trim());';
   }).join('\n        ');
-  
   var validations = '';
   fields.forEach(function(f) {
     if (f.name === 'nama') {
       validations += 'if (!obj || !String(obj.nama || "").trim()) {\n      return { success: false, message: "Nama ' + entityLower + ' tidak boleh kosong." };\n    }';
     }
   });
-  
   var appendParts = ['id'];
   fields.forEach(function(f) {
     appendParts.push('String(obj.' + f.name + ' || "").trim()');
   });
   var appendValues = appendParts.join(', ');
-
-  var headerStrs = [];
-  headers.forEach(function(h) {
-    headerStrs.push("'" + h + "'");
-  });
+  var headerStrs = headers.map(function(h) { return "'" + h + "'"; });
 
   return '// File: ' + entityCapital + '.js\n' +
 '// Auto-generated by SIAKAD CRUD Generator\n' +
@@ -310,12 +280,9 @@ function generateServerFile() {
 '}\n';
 }
 
-// --- VIEW FILE (e.g. views/modules/JurusanView.html) ---
 function generateViewFile() {
   var cols = options.fields;
-  
-  var theadHtml = '';
-  theadHtml += '          <th class="py-3 px-4">ID</th>\n';
+  var theadHtml = '          <th class="py-3 px-4">ID</th>\n';
   cols.forEach(function(c) {
     var label = c.name.charAt(0).toUpperCase() + c.name.slice(1);
     theadHtml += '          <th class="py-3 px-4">' + label + '</th>\n';
@@ -344,12 +311,9 @@ theadHtml + '\n' +
 '</div>\n';
 }
 
-// --- CRUD CONFIG ENTRY ---
 function generateCrudConfigEntry() {
   var cols = options.fields;
-  
-  var formFields = '';
-  formFields += '        id:   { el: "' + entityKey + '_id", type: "hidden" },\n';
+  var formFields = '        id:   { el: "' + entityKey + '_id", type: "hidden" },\n';
   cols.forEach(function(c) {
     var elId = entityKey + '_' + c.name;
     var label = c.name.charAt(0).toUpperCase() + c.name.slice(1);
@@ -365,11 +329,8 @@ function generateCrudConfigEntry() {
       formFields += '        ' + c.name + ': { el: "' + elId + '", type: "' + c.type + '", label: "' + label + '", placeholder: "' + c.placeholder + '" },\n';
     }
   });
-  // Remove trailing comma and newline
   formFields = formFields.replace(/,\n$/, '\n');
-  
-  var tableCols = '';
-  tableCols += '        { label: "ID", key: 0 },\n';
+  var tableCols = '        { label: "ID", key: 0 },\n';
   cols.forEach(function(c, i) {
     var label = c.name.charAt(0).toUpperCase() + c.name.slice(1);
     tableCols += '        { label: "' + label + '", key: ' + (i + 1) + ' },\n';
@@ -395,7 +356,6 @@ tableCols +
 '  }';
 }
 
-// --- WRAPPER FUNCTIONS ---
 function generateWrapperFunctions() {
   return 'function loadData' + entityCapital + '() { loadData("' + entityKey + '"); }\n' +
 'function simpan' + entityCapital + '() { simpanData("' + entityKey + '"); }\n' +
@@ -405,7 +365,6 @@ function generateWrapperFunctions() {
 "renderForm('" + entityKey + "');\n";
 }
 
-// --- MENU REGISTRY ENTRY ---
 function generateMenuRegistryEntry() {
   return '  ' + entityKey + ': {\n' +
 '    title: "' + options.title + '",\n' +
@@ -413,18 +372,15 @@ function generateMenuRegistryEntry() {
 '  }';
 }
 
-// --- SIDEBAR BUTTON ---
 function generateSidebarButton() {
   var label = options.title.replace('Manajemen Data ', '');
   return '    <button onclick="pindahMenu(\'' + entityKey + '\')" id="menu' + entityCapital + 'Btn" class="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-800">' + options.icon + ' ' + label + '</button>';
 }
 
-// --- INCLUDE LINE ---
 function generateIncludeLine() {
   return '        <?!= include(\'' + entityCapital + 'View\'); ?>';
 }
 
-// --- CODE.JS PATH MAPPING ---
 function generateCodeJsMapping() {
   return "    '" + entityCapital + "View': 'views/modules/" + entityCapital + "View',";
 }
@@ -472,15 +428,12 @@ function readFileSafe(filePath) {
   }
 }
 
-// --- Utility: safely insert a new property into a JavaScript object literal ---
+// Utility: insert a property into a JavaScript object literal
 function insertIntoObjectLiteral(content, startPattern, newEntry, endPattern) {
-  // Find start of object
   var startIdx = content.indexOf(startPattern);
   if (startIdx === -1) {
-    console.error('Tidak dapat menemukan "' + startPattern + '"');
     return null;
   }
-  // Find matching closing brace
   var braceCount = 0;
   var endIdx = -1;
   var searchStart = startIdx + startPattern.length;
@@ -496,36 +449,26 @@ function insertIntoObjectLiteral(content, startPattern, newEntry, endPattern) {
     }
   }
   if (endIdx === -1) {
-    console.error('Tidak dapat menemukan penutup "}" untuk objek');
     return null;
   }
-  
   var before = content.substring(0, startIdx + startPattern.length);
   var inside = content.substring(startIdx + startPattern.length, endIdx);
   var after = content.substring(endIdx);
-  
-  // Trim whitespace and check if inside is empty or only whitespace
   var trimmedInside = inside.trim();
   var newInside;
   if (trimmedInside === '') {
-    // No existing properties, just add new entry without comma
     newInside = '\n  ' + newEntry + '\n';
   } else {
-    // Check if the last non-whitespace character inside is a comma
     var lastNonWS = inside.replace(/\s+$/, '');
     if (lastNonWS[lastNonWS.length - 1] === ',') {
-      // Already has trailing comma, just add new entry
       newInside = inside + '\n  ' + newEntry;
     } else {
-      // Need to add comma before new entry
       newInside = inside + ',\n  ' + newEntry;
     }
   }
-  
   return before + newInside + after;
 }
 
-// --- Specific updaters using the utility ---
 function updateCrudConfig(content) {
   var entry = generateCrudConfigEntry();
   return insertIntoObjectLiteral(content, 'crudConfig = {', entry, '}');
@@ -536,89 +479,26 @@ function updateMenuRegistry(content) {
   return insertIntoObjectLiteral(content, 'menuRegistry = {', entry, '}');
 }
 
-function addCodeJsMapping(content) {
-  // Code.js has an object named 'views' inside getView function or similar.
-  // We'll assume it's a simple object literal with property mappings.
-  // We'll use a marker approach as before but with the robust insertion.
-  var entry = generateCodeJsMapping();
-  // We'll find the views object using a marker comment
-  var marker = '// >>> Tambahkan mapping view entitas baru di sini <<<';
-  var markerIdx = content.indexOf(marker);
-  if (markerIdx === -1) {
-    console.error('Tidak dapat menemukan marker mapping di Code.js');
-    return null;
-  }
-  // After the marker, we assume there is an object or a list of properties.
-  // We'll use insertIntoObjectLiteral with a pattern.
-  // Actually, it's easier to just insert after the marker with a newline.
-  // But to be safe, we can search for the 'views = {' or similar.
-  // Since the marker is inside the views object, we can use that.
-  // Let's just insert the new mapping after the marker with proper comma handling.
-  // We'll find the end of the views object.
-  var viewsStart = content.indexOf('views = {', markerIdx);
-  if (viewsStart === -1) {
-    console.error('Tidak dapat menemukan "views = {" di Code.js');
-    return null;
-  }
-  // Use the same insertion logic but with a custom pattern.
-  // Since we already have the marker, we can just insert the new mapping before the closing brace of views.
-  // Let's find the matching brace of views.
-  var braceCount = 0;
-  var endViews = -1;
-  for (var i = viewsStart + 'views = {'.length; i < content.length; i++) {
-    if (content[i] === '{') braceCount++;
-    else if (content[i] === '}') {
-      if (braceCount === 0) {
-        endViews = i;
-        break;
-      }
-      braceCount--;
-    }
-  }
-  if (endViews === -1) {
-    console.error('Tidak dapat menemukan penutup "}" untuk views di Code.js');
-    return null;
-  }
-  var beforeViews = content.substring(0, viewsStart + 'views = {'.length);
-  var insideViews = content.substring(viewsStart + 'views = {'.length, endViews);
-  var afterViews = content.substring(endViews);
-  
-  // Insert new entry with comma handling
-  var trimmedInside = insideViews.trim();
-  var newInside;
-  if (trimmedInside === '') {
-    newInside = '\n  ' + entry + '\n';
-  } else {
-    var lastNonWS = insideViews.replace(/\s+$/, '');
-    if (lastNonWS[lastNonWS.length - 1] === ',') {
-      newInside = insideViews + '\n  ' + entry;
-    } else {
-      newInside = insideViews + ',\n  ' + entry;
-    }
-  }
-  return beforeViews + newInside + afterViews;
-}
-
+// --- Fungsi untuk menambahkan wrapper functions di JavascriptCrud.html ---
 function addWrapperFunctions(content) {
   var funcs = generateWrapperFunctions();
-  // Insert before </script>
+  // Cek apakah sudah ada untuk entity ini
+  if (content.indexOf('loadData' + entityCapital) !== -1) {
+    console.warn('Fungsi untuk ' + entityCapital + ' sudah ada, dilewati.');
+    return content;
+  }
+  // Sisipkan sebelum </script>
   var match = content.lastIndexOf('</script>');
   if (match === -1) {
     console.error('Tidak dapat menemukan </script> di JavascriptCrud.html');
     return null;
   }
-  // Avoid duplicate functions? We'll just append.
-  // Check if already exists (simple check)
-  if (content.indexOf('loadData' + entityCapital) !== -1) {
-    console.warn('Fungsi untuk ' + entityCapital + ' sudah ada, dilewati.');
-    return content;
-  }
   return content.slice(0, match) + '\n' + funcs + '\n' + content.slice(match);
 }
 
+// --- Tambahkan sidebar button di Aside.html ---
 function addSidebarButton(content) {
   var btn = generateSidebarButton();
-  // Check if already exists
   if (content.indexOf('menu' + entityCapital + 'Btn') !== -1) {
     console.warn('Tombol sidebar untuk ' + entityCapital + ' sudah ada, dilewati.');
     return content;
@@ -631,21 +511,176 @@ function addSidebarButton(content) {
   return content.slice(0, match) + '\n' + btn + content.slice(match);
 }
 
+// --- Tambahkan include di Index.html ---
 function addIncludeLine(content) {
   var line = generateIncludeLine();
-  // Check if already exists
   if (content.indexOf('include(\'' + entityCapital + 'View\')') !== -1) {
     console.warn('Include untuk ' + entityCapital + 'View sudah ada, dilewati.');
     return content;
   }
-  // Find position: either before </main> or after last include
-  var mainClose = content.lastIndexOf('</main>');
-  if (mainClose === -1) {
-    console.error('Tidak dapat menemukan </main> di Index.html');
-    return null;
+
+  // Cari div dengan class "flex-1 p-8 overflow-y-auto"
+  var divRegex = /<div\s+class="flex-1 p-8 overflow-y-auto"[^>]*>/;
+  var divMatch = content.match(divRegex);
+  if (divMatch) {
+    var divStart = divMatch.index + divMatch[0].length;
+    // Cari penutup </div> terdekat setelah divStart (dengan menghitung nesting)
+    var depth = 0;
+    var endDiv = -1;
+    for (var i = divStart; i < content.length; i++) {
+      if (content.substr(i, 4) === '<div') depth++;
+      else if (content.substr(i, 6) === '</div>') {
+        if (depth === 0) {
+          endDiv = i;
+          break;
+        }
+        depth--;
+      }
+    }
+    if (endDiv !== -1) {
+      // Sisipkan sebelum </div> penutup
+      return content.slice(0, endDiv) + '\n        ' + line + '\n' + content.slice(endDiv);
+    }
   }
-  // Insert before </main>
-  return content.slice(0, mainClose) + '\n' + line + '\n' + content.slice(mainClose);
+
+  // Fallback: cari </div> terakhir sebelum </main> atau di akhir
+  var mainClose = content.lastIndexOf('</main>');
+  if (mainClose !== -1) {
+    var lastDiv = content.lastIndexOf('</div>', mainClose);
+    if (lastDiv !== -1) {
+      return content.slice(0, lastDiv) + '\n        ' + line + '\n' + content.slice(lastDiv);
+    }
+  }
+
+  // Jika semua gagal, sisipkan sebelum </body>
+  var bodyClose = content.lastIndexOf('</body>');
+  if (bodyClose !== -1) {
+    return content.slice(0, bodyClose) + '\n        ' + line + '\n' + content.slice(bodyClose);
+  }
+
+  console.error('Tidak dapat menemukan tempat untuk menyisipkan include di Index.html');
+  return null;
+}
+
+// --- Tambahkan mapping di Code.js ---
+function addCodeJsMapping(content) {
+  var entry = generateCodeJsMapping();
+  if (content.indexOf("'" + entityCapital + "View'") !== -1) {
+    console.warn('Mapping untuk ' + entityCapital + 'View sudah ada di Code.js, dilewati.');
+    return content;
+  }
+
+  // 1. Coba marker khusus
+  var marker = '// >>> Tambahkan mapping view entitas baru di sini <<<';
+  var markerIdx = content.indexOf(marker);
+  if (markerIdx !== -1) {
+    var patterns = [
+      { regex: /(var\s+)?views\s*=\s*\{/, key: 'views' },
+      { regex: /(var\s+)?templatePaths\s*=\s*\{/, key: 'templatePaths' },
+      { regex: /(var\s+)?pathMappings\s*=\s*\{/, key: 'pathMappings' },
+    ];
+    var found = null;
+    for (var pi = 0; pi < patterns.length; pi++) {
+      var match = content.match(patterns[pi].regex);
+      if (match && match.index < markerIdx) {
+        found = patterns[pi];
+        break;
+      }
+    }
+    if (found) {
+      var result = insertIntoObjectLiteral(content, found.regex.source, entry, '}');
+      if (result) return result;
+    }
+    // Jika tidak ada objek, sisipkan setelah marker
+    var before = content.substring(0, markerIdx + marker.length);
+    var after = content.substring(markerIdx + marker.length);
+    return before + '\n' + entry + after;
+  }
+
+  // 2. Deteksi objek views / templatePaths di seluruh file
+  var patterns = [
+    { regex: /(var\s+)?views\s*=\s*\{/, key: 'views' },
+    { regex: /(var\s+)?templatePaths\s*=\s*\{/, key: 'templatePaths' },
+    { regex: /(var\s+)?pathMappings\s*=\s*\{/, key: 'pathMappings' },
+  ];
+  for (var p = 0; p < patterns.length; p++) {
+    var re = patterns[p].regex;
+    var match = content.match(re);
+    if (match) {
+      var patternStr = match[0];
+      var startIdx = match.index;
+      var braceCount = 0;
+      var endIdx = -1;
+      for (var j = startIdx + patternStr.length; j < content.length; j++) {
+        if (content[j] === '{') braceCount++;
+        else if (content[j] === '}') {
+          if (braceCount === 0) {
+            endIdx = j;
+            break;
+          }
+          braceCount--;
+        }
+      }
+      if (endIdx !== -1) {
+        var beforeObj = content.substring(0, startIdx + patternStr.length);
+        var inside = content.substring(startIdx + patternStr.length, endIdx);
+        var afterObj = content.substring(endIdx);
+        var trimmed = inside.trim();
+        var newInside;
+        if (trimmed === '') {
+          newInside = '\n  ' + entry + '\n';
+        } else {
+          var lastNonWS = inside.replace(/\s+$/, '');
+          if (lastNonWS[lastNonWS.length - 1] === ',') {
+            newInside = inside + '\n  ' + entry;
+          } else {
+            newInside = inside + ',\n  ' + entry;
+          }
+        }
+        return beforeObj + newInside + afterObj;
+      }
+    }
+  }
+
+  // 3. Cari fungsi resolveTemplatePath
+  var funcMatch = content.match(/function\s+resolveTemplatePath\s*\(/);
+  if (funcMatch) {
+    var returnObj = content.substring(funcMatch.index).match(/return\s*\{/);
+    if (returnObj) {
+      var start = funcMatch.index + returnObj.index + 'return {'.length;
+      var bc = 0;
+      var end = -1;
+      for (var k = start; k < content.length; k++) {
+        if (content[k] === '{') bc++;
+        else if (content[k] === '}') {
+          if (bc === 0) { end = k; break; }
+          bc--;
+        }
+      }
+      if (end !== -1) {
+        var beforeFunc = content.substring(0, start);
+        var insideFunc = content.substring(start, end);
+        var afterFunc = content.substring(end);
+        var trimmedInside = insideFunc.trim();
+        var newInside;
+        if (trimmedInside === '') {
+          newInside = '\n    ' + entry + '\n';
+        } else {
+          var lastNonWS = insideFunc.replace(/\s+$/, '');
+          if (lastNonWS[lastNonWS.length - 1] === ',') {
+            newInside = insideFunc + '\n    ' + entry;
+          } else {
+            newInside = insideFunc + ',\n    ' + entry;
+          }
+        }
+        return beforeFunc + newInside + afterFunc;
+      }
+    }
+  }
+
+  // 4. Jika tidak ditemukan, tulis di bagian bawah file
+  console.warn('Tidak dapat menemukan objek views/templatePaths di Code.js. Menambahkan di akhir file.');
+  return content + '\n\n// Mapping untuk ' + entityCapital + '\n' + entry + '\n';
 }
 
 // ==========================================
@@ -689,7 +724,6 @@ try {
   console.log('  + Created: ' + paths.server);
 } catch (err) {
   errors.push('Gagal membuat ' + paths.server + ': ' + err.message);
-  console.error('  X ' + errors[errors.length-1]);
 }
 
 // 2. View file
@@ -698,7 +732,6 @@ try {
   console.log('  + Created: ' + paths.view);
 } catch (err) {
   errors.push('Gagal membuat ' + paths.view + ': ' + err.message);
-  console.error('  X ' + errors[errors.length-1]);
 }
 
 // 3. JavascriptCrud.html
@@ -713,7 +746,6 @@ if (crudContent) {
         console.log('  * Updated: ' + paths.crudHtml + ' (crudConfig + wrapper functions)');
       } catch (err) {
         errors.push('Gagal menulis ' + paths.crudHtml + ': ' + err.message);
-        console.error('  X ' + errors[errors.length-1]);
       }
     } else {
       errors.push('Gagal menambahkan wrapper functions');
@@ -725,7 +757,7 @@ if (crudContent) {
   errors.push('Gagal membaca ' + paths.crudHtml);
 }
 
-// 4. JavascriptCore.html (menuRegistry)
+// 4. JavascriptCore.html
 var coreContent = readFileSafe(paths.javascriptCore);
 if (coreContent) {
   var updated = updateMenuRegistry(coreContent);
@@ -735,7 +767,6 @@ if (coreContent) {
       console.log('  * Updated: ' + paths.javascriptCore + ' (menuRegistry)');
     } catch (err) {
       errors.push('Gagal menulis ' + paths.javascriptCore + ': ' + err.message);
-      console.error('  X ' + errors[errors.length-1]);
     }
   } else {
     errors.push('Gagal menambahkan menuRegistry entry');
@@ -754,7 +785,6 @@ if (asideContent) {
       console.log('  * Updated: ' + paths.asideHtml + ' (sidebar button)');
     } catch (err) {
       errors.push('Gagal menulis ' + paths.asideHtml + ': ' + err.message);
-      console.error('  X ' + errors[errors.length-1]);
     }
   } else {
     errors.push('Gagal menambahkan sidebar button');
@@ -773,7 +803,6 @@ if (indexContent) {
       console.log('  * Updated: ' + paths.indexHtml + ' (include view)');
     } catch (err) {
       errors.push('Gagal menulis ' + paths.indexHtml + ': ' + err.message);
-      console.error('  X ' + errors[errors.length-1]);
     }
   } else {
     errors.push('Gagal menambahkan include line');
@@ -792,7 +821,6 @@ if (codeContent) {
       console.log('  * Updated: ' + paths.codeJs + ' (path mapping)');
     } catch (err) {
       errors.push('Gagal menulis ' + paths.codeJs + ': ' + err.message);
-      console.error('  X ' + errors[errors.length-1]);
     }
   } else {
     errors.push('Gagal menambahkan path mapping');
@@ -808,7 +836,6 @@ console.log('');
 console.log('========================================');
 console.log('  GENERATION SUMMARY');
 console.log('========================================');
-
 if (errors.length === 0) {
   console.log('  Semua file berhasil dibuat!');
 } else {
@@ -816,12 +843,10 @@ if (errors.length === 0) {
 }
 console.log('========================================');
 console.log('');
-
 if (errors.length > 0) {
   console.log('Errors:');
   errors.forEach(function(e) { console.log('  - ' + e); });
 }
-
 console.log('');
 console.log('Langkah selanjutnya:');
 console.log('  1. Jalankan: clasp push');
