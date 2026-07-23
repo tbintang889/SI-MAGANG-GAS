@@ -1,0 +1,83 @@
+<!-- ========================================== -->
+<!-- MODUL: LAPORAN TUGAS -->
+<!-- ========================================== -->
+<div id="modulLaporanTugas" class="hidden fade-in space-y-6">
+
+  <!-- Filter Section -->
+  <div class="bg-white p-6 rounded-xl shadow-sm border">
+    <h4 class="text-base font-bold text-slate-800 mb-4">🔍 Filter Laporan Tugas</h4>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Filter Projek -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Projek</label>
+        <select id="filterProjek" class="border p-2.5 rounded-lg w-full">
+          <option value="">-- Semua Projek --</option>
+        </select>
+      </div>
+      <!-- Filter Siswa -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Siswa</label>
+        <select id="filterSiswa" class="border p-2.5 rounded-lg w-full">
+          <option value="">-- Semua Siswa --</option>
+        </select>
+      </div>
+      <!-- Filter Status -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
+        <select id="filterStatus" class="border p-2.5 rounded-lg w-full">
+          <option value="">-- Semua Status --</option>
+          <option value="pending">Pending</option>
+          <option value="onprogress">On Progress</option>
+          <option value="suspend">Suspend</option>
+          <option value="done">Done</option>
+        </select>
+      </div>
+      <!-- Tombol Aksi -->
+      <div class="flex items-end gap-2">
+        <button onclick="applyFilterLaporanTugas()" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg flex-1">Terapkan</button>
+        <button onclick="resetFilterLaporanTugas()" class="bg-slate-200 text-slate-700 px-5 py-2.5 rounded-lg">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ringkasan -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white p-4 rounded-xl border shadow-sm">
+      <p class="text-xs font-semibold uppercase text-slate-400">Total Tugas</p>
+      <h3 id="laporanTotalTugas" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
+    </div>
+    <div class="bg-white p-4 rounded-xl border shadow-sm">
+      <p class="text-xs font-semibold uppercase text-slate-400">Total Bobot</p>
+      <h3 id="laporanTotalBobot" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
+    </div>
+    <div class="bg-white p-4 rounded-xl border shadow-sm">
+      <p class="text-xs font-semibold uppercase text-slate-400">Rata-rata Nilai</p>
+      <h3 id="laporanRataNilai" class="text-2xl font-bold text-emerald-600 mt-1">0</h3>
+    </div>
+    <div class="bg-white p-4 rounded-xl border shadow-sm">
+      <p class="text-xs font-semibold uppercase text-slate-400">Nilai × Bobot</p>
+      <h3 id="laporanTotalNilaiBobot" class="text-2xl font-bold text-blue-600 mt-1">0</h3>
+    </div>
+  </div>
+
+  <!-- Tabel Laporan -->
+  <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+    <table class="w-full text-left">
+      <thead class="bg-slate-50 border-b">
+        <tr>
+          <th class="py-3 px-4">#</th>
+          <th class="py-3 px-4">Siswa</th>
+          <th class="py-3 px-4">Projek</th>
+          <th class="py-3 px-4">Tugas</th>
+          <th class="py-3 px-4">Bobot</th>
+          <th class="py-3 px-4">Status</th>
+          <th class="py-3 px-4">Nilai</th>
+          <th class="py-3 px-4">Nilai×Bobot</th>
+        </tr>
+      </thead>
+      <tbody id="tabelLaporanTugas" class="divide-y divide-slate-100"></tbody>
+    </table>
+  </div>
+
+</div>
+

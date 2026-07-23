@@ -1,34 +1,63 @@
   <script>
     // ==========================================
-    // LAPORAN - READ ONLY
+    // LAPORAN TUGAS - READ ONLY
     // ==========================================
-    let rawLaporanData = [];
+    let rawLaporanTugas = [];
+    let filterOptionsTugas = {};
 
-    function loadDataLaporan() {
-      const tbody = document.getElementById('tabelLaporan');
-      if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-500">Memuat data laporan...</td></tr>';
+    function loadDataLaporanTugas() {
+      const tbody = document.getElementById('tabelLaporanTugas');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-slate-500">Memuat data laporan...</td></tr>';
 
-      gasRun('getLaporan', {}, res => {
+      gasRun('getLaporanTugas', {}, res => {
         if (!res) return;
-        rawLaporanData = res.data || [];
-        populateFilterLaporanOptions(res.filterOptions);
-        renderLaporanTable(rawLaporanData);
+        rawLaporanTugas = res.data || [];
+        filterOptionsTugas = res.filterOptions || {};
+        populateFilterLaporanTugas(filterOptionsTugas);
+        renderLaporanTugas(rawLaporanTugas, res.ringkasan);
       });
     }
 
-    function populateFilterLaporanOptions(opts) {
+    function populateFilterLaporanTugas(opts) {
       if (!opts) return;
-      // Sesuaikan dengan filter yang ada di view laporan
-      // Contoh: isi dropdown filter
+
+      // Projek dropdown
+      const filterProjek = document.getElementById('filterProjek');
+      if (filterProjek && opts.projek) {
+        let html = '<option value="">-- Semua Projek --</option>';
+        opts.projek.forEach(p => {
+          html += `<option value="${p.id}">${p.nama}</option>`;
+        });
+        filterProjek.innerHTML = html;
+      }
+
+      // Siswa dropdown
+      const filterSiswa = document.getElementById('filterSiswa');
+      if (filterSiswa && opts.siswa) {
+        let html = '<option value="">-- Semua Siswa --</option>';
+        opts.siswa.forEach(s => {
+          html += `<option value="${s.id}">${s.nama}</option>`;
+        });
+        filterSiswa.innerHTML = html;
+      }
     }
 
-    function renderLaporanTable(dataList) {
-      const tbody = document.getElementById('tabelLaporan');
+    function renderLaporanTugas(dataList, ringkasan) {
+      // Update ringkasan
+      if (ringkasan) {
+        document.getElementById('laporanTotalTugas').innerText = ringkasan.total || 0;
+        document.getElementById('laporanTotalBobot').innerText = ringkasan.totalBobot || 0;
+        document.getElementById('laporanRataNilai').innerText = ringkasan.rataNilai || 0;
+        document.getElementById('laporanTotalNilaiBobot').innerText = ringkasan.totalNilaiBobot || 0;
+      }
+
+      // Render tabel
+      const tbody = document.getElementById('tabelLaporanTugas');
       if (!tbody) return;
       tbody.innerHTML = '';
 
       if (!dataList || dataList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-500">Data tidak ditemukan.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-slate-500">Data tidak ditemukan.</td></tr>';
         return;
       }
 
@@ -36,21 +65,46 @@
         tbody.innerHTML += `
           <tr class="hover:bg-slate-50 border-b">
             <td class="py-3 px-4 text-center">${index + 1}</td>
-            <td class="py-3 px-4">${item.kolom1 || '-'}</td>
-            <td class="py-3 px-4">${item.kolom2 || '-'}</td>
-            <td class="py-3 px-4">${item.kolom3 || '-'}</td>
+            <td class="py-3 px-4">${item.siswa || '-'}</td>
+            <td class="py-3 px-4">${item.projek || '-'}</td>
+            <td class="py-3 px-4">${item.tugas || '-'}</td>
+            <td class="py-3 px-4"><span class="px-2 py-1 rounded text-xs font-semibold ${item.bobot === 'berat' ? 'bg-red-100 text-red-700' : item.bobot === 'sedang' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}">${item.bobot || '-'}</span></td>
+            <td class="py-3 px-4"><span class="px-2 py-1 rounded text-xs font-semibold ${item.status === 'done' ? 'bg-green-100 text-green-700' : item.status === 'onprogress' ? 'bg-blue-100 text-blue-700' : item.status === 'suspend' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}">${item.status || '-'}</span></td>
+            <td class="py-3 px-4 font-semibold">${item.nilai || '-'}</td>
+            <td class="py-3 px-4">${item.nilaiBobot || '-'}</td>
           </tr>`;
       });
     }
 
-    function applyFilterLaporan() {
-      // Filter data berdasarkan pilihan user
-      renderLaporanTable(rawLaporanData);
+    function applyFilterLaporanTugas() {
+      const filter = {
+        projek_id: document.getElementById('filterProjek')?.value || '',
+        siswa_id: document.getElementById('filterSiswa')?.value || '',
+        status: document.getElementById('filterStatus')?.value || ''
+      };
+
+      // Hapus filter kosong
+      const activeFilter = {};
+      for (const key in filter) {
+        if (filter[key]) activeFilter[key] = filter[key];
+      }
+
+      const tbody = document.getElementById('tabelLaporanTugas');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-slate-500">Memuat...</td></tr>';
+
+      gasRun('getLaporanTugas', activeFilter, res => {
+        if (!res) return;
+        renderLaporanTugas(res.data || [], res.ringkasan);
+      });
     }
 
-    function resetFilterLaporan() {
-      // Reset semua filter
-      renderLaporanTable(rawLaporanData);
+    function resetFilterLaporanTugas() {
+      document.getElementById('filterProjek').value = '';
+      document.getElementById('filterSiswa').value = '';
+      document.getElementById('filterStatus').value = '';
+      loadDataLaporanTugas();
     }
   </script>
+
+
 

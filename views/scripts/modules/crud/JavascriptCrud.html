@@ -148,7 +148,57 @@
         { label: "Nama", key: 1 },
         { label: "Kode", key: 2 }
     ]
-  }};
+  },
+    projek: {
+    formWrapperId: "formProjek",
+    tableId: "tabelProjek",
+    titleFormId: "titleFormProjek",
+    form: {
+        id:   { el: "projek_id", type: "hidden" },
+        nama: { el: "projek_nama", type: "text", label: "Nama", placeholder: "Nama Projek" },
+        kode: { el: "projek_kode", type: "text", label: "Kode", placeholder: "Kode Projek" }
+    },
+    btnSaveId: "btnSimpanProjek",
+    btnCancelId: "btnBatalProjek",
+    loader: ["getProjek"],
+    create: "createProjek",
+    update: "updateProjek",
+    delete: "deleteProjek",
+    tableColumns: [
+        { label: "ID", key: 0 },
+        { label: "Nama", key: 1 },
+        { label: "Kode", key: 2 }
+    ]
+  },
+    tugas: {
+      formWrapperId: "formTugas",
+      tableId: "tabelTugas",
+      titleFormId: "titleFormTugas",
+      form: {
+        id: { el: "tugas_id", type: "hidden" },
+        siswa_id: { el: "tugas_siswa_id", type: "dropdown", label: "Siswa", options: ["-- Memuat Siswa --"] },
+        projek_id: { el: "tugas_projek_id", type: "dropdown", label: "Projek", options: ["-- Memuat Projek --"] },
+        tugas: { el: "tugas_tugas", type: "text", label: "Tugas", placeholder: "Deskripsi Tugas" },
+        bobot: { el: "tugas_bobot", type: "dropdown", label: "Bobot", options: ["ringan", "sedang", "berat"] },
+        status: { el: "tugas_status", type: "dropdown", label: "Status", options: ["pending", "onprogress", "suspend", "done"] },
+        nilai: { el: "tugas_nilai", type: "number", label: "Nilai", placeholder: "0-100" }
+      },
+      btnSaveId: "btnSimpanTugas",
+      btnCancelId: "btnBatalTugas",
+      loader: ["getTugas"],
+      create: "createTugas",
+      update: "updateTugas",
+      delete: "deleteTugas",
+      tableColumns: [
+        { label: "ID", key: 0 },
+        { label: "Siswa", key: 1 },
+        { label: "Projek", key: 2 },
+        { label: "Tugas", key: 3 },
+        { label: "Bobot", key: 4 },
+        { label: "Status", key: 5 },
+        { label: "Nilai", key: 6 }
+      ]
+    }};
 
   // ==========================================
   // RENDER FORM
@@ -599,5 +649,56 @@ function populateSiswaSekolahDropdown() {
   }).getOptionsSekolah();                           // Panggil server
 }
 renderForm('sekolah');
+
+function loadDataProjek() { loadData("projek"); }
+function simpanProjek() { simpanData("projek"); }
+function editProjek() { editData("projek"); }
+function resetFormProjek() { resetForm("projek"); }
+function hapusProjek() { hapusData("projek"); }
+
+function loadDataTugas() {
+  populateTugasSiswaDropdown();
+  populateTugasProjekDropdown();
+  loadData("tugas");
+}
+function simpanTugas() { simpanData("tugas"); }
+function editTugas() { editData("tugas"); }
+function resetFormTugas() { resetForm("tugas"); }
+function hapusTugas() { hapusData("tugas"); }
+
+function populateTugasSiswaDropdown() {
+  google.script.run.withSuccessHandler(list => {
+    const selectEl = document.getElementById('tugas_siswa_id');
+    if (!selectEl) return;
+    const currVal = selectEl.value;
+    let html = '<option value="">-- Pilih Siswa --</option>';
+    if (list && list.length > 0) {
+      list.forEach(m => {
+        html += `<option value="${m.id}">${m.nama}</option>`;
+      });
+    }
+    selectEl.innerHTML = html;
+    if (currVal) selectEl.value = currVal;
+  }).getOptionsSiswa();
+}
+
+function populateTugasProjekDropdown() {
+  google.script.run.withSuccessHandler(list => {
+    const selectEl = document.getElementById('tugas_projek_id');
+    if (!selectEl) return;
+    const currVal = selectEl.value;
+    let html = '<option value="">-- Pilih Projek --</option>';
+    if (list && list.length > 0) {
+      list.forEach(m => {
+        html += `<option value="${m.id}">${m.nama} (${m.kode})</option>`;
+      });
+    }
+    selectEl.innerHTML = html;
+    if (currVal) selectEl.value = currVal;
+  }).getOptionsProjek();
+}
+
+renderForm('projek');
+renderForm('tugas');
 
 </script>

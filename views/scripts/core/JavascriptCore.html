@@ -26,6 +26,18 @@
     sekolah: {
     title: "Manajemen Data Sekolah",
     loader: () => typeof loadDataSekolah === "function" && loadDataSekolah()
+  },
+    projek: {
+    title: "Manajemen Data Projek",
+    loader: () => typeof loadDataProjek === "function" && loadDataProjek()
+  },
+    tugas: {
+    title: "Manajemen Data Tugas",
+    loader: () => typeof loadDataTugas === "function" && loadDataTugas()
+  },
+    laporantugas: {
+    title: "📊 Laporan Tugas",
+    loader: () => typeof loadDataLaporanTugas === "function" && loadDataLaporanTugas()
   }};
 
     function registerMenu(menuKey, config) {

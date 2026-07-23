@@ -6,7 +6,7 @@
     let chart2Inst = null;
 
     // ==========================================
-    // LOAD DASHBOARD DATA
+    // LOAD DASHBOARD DATA (Gabungan semua)
     // ==========================================
     function loadDataDashboard() {
       google.script.run.withSuccessHandler(renderDashboard).getDashboardSummary();
@@ -15,38 +15,61 @@
     function renderDashboard(res) {
       if (!res) return;
 
-      // Update KPI Cards
-      document.getElementById('dashKpi1').innerText = res.kpi?.total1 || 0;
-      document.getElementById('dashKpi2').innerText = res.kpi?.total2 || 0;
-      document.getElementById('dashKpi3').innerText = res.kpi?.total3 || 0;
-      document.getElementById('dashKpi4').innerText = res.kpi?.avg || 0;
+      // COMPONENT: Render KPI
+      renderKpiCards(res.kpi);
 
-      // Render Charts
-      renderChart1(res.chart1Data);
-      renderChart2(res.chart2Data);
+      // COMPONENT: Render Charts
+      renderDoughnutChart('chart1', res.chart1Data);
+      renderBarChart('chart2', res.chart2Data);
 
-      // Render Recent Data
-      renderRecentData(res.recentData);
+      // COMPONENT: Render Recent Data Table (5 kolom: Siswa, Projek, Tugas, Status, Nilai)
+      renderRecentTable('dashRecentData', res.recentData, ['kolom1', 'kolom2', 'kolom3', 'kolom4', 'kolom5']);
     }
 
     // ==========================================
-    // RENDER CHART 1 (Doughnut)
+    // COMPONENT: KPI Cards
     // ==========================================
-    function renderChart1(dataObj) {
-      const ctx = document.getElementById('chart1');
+    // kpiObj: { total1, total2, total3, avg }
+    // mapping: { idElement: keyDiObj, ... } — optional, default pakai dashKpi1..4
+    function renderKpiCards(kpiObj, mapping) {
+      if (!kpiObj) return;
+      const map = mapping || {
+        dashKpi1: 'total1',
+        dashKpi2: 'total2',
+        dashKpi3: 'total3',
+        dashKpi4: 'avg'
+      };
+      for (const idEl in map) {
+        const el = document.getElementById(idEl);
+        if (el) el.innerText = kpiObj[map[idEl]] || 0;
+      }
+    }
+
+    // ==========================================
+    // COMPONENT: Doughnut Chart
+    // ==========================================
+    // canvasId: ID elemen <canvas>
+    // dataObj: { label: count, ... }
+    // colors: array warna (optional)
+    function renderDoughnutChart(canvasId, dataObj, colors) {
+      const ctx = document.getElementById(canvasId);
       if (!ctx) return;
-      if (chart1Inst) chart1Inst.destroy();
+
+      // Hancurkan instance lama jika ada
+      if (canvasId === 'chart1' && chart1Inst) chart1Inst.destroy();
+      else if (canvasId === 'chart2' && chart2Inst) chart2Inst.destroy();
 
       const labels = Object.keys(dataObj || {});
       const values = Object.values(dataObj || {});
+      const defaultColors = ['#3b82f6', '#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6'];
 
-      chart1Inst = new Chart(ctx, {
+      const newChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
           labels: labels.length > 0 ? labels : ['Belum ada data'],
           datasets: [{
             data: values.length > 0 ? values : [1],
-            backgroundColor: ['#3b82f6', '#6366f1', '#10b981', '#f59e0b', '#ec4899'],
+            backgroundColor: colors || defaultColors,
             borderWidth: 2,
             borderColor: '#ffffff'
           }]
@@ -57,27 +80,37 @@
           plugins: { legend: { position: 'bottom' } }
         }
       });
+
+      // Simpan instance
+      if (canvasId === 'chart1') chart1Inst = newChart;
+      else if (canvasId === 'chart2') chart2Inst = newChart;
     }
 
     // ==========================================
-    // RENDER CHART 2 (Bar)
+    // COMPONENT: Bar Chart
     // ==========================================
-    function renderChart2(dataArr) {
-      const ctx = document.getElementById('chart2');
+    // canvasId: ID elemen <canvas>
+    // dataArr: [{ label: '...', value: N }, ...]
+    // warna: string warna (optional)
+    function renderBarChart(canvasId, dataArr, warna) {
+      const ctx = document.getElementById(canvasId);
       if (!ctx) return;
-      if (chart2Inst) chart2Inst.destroy();
+
+      // Hancurkan instance lama jika ada
+      if (canvasId === 'chart1' && chart1Inst) chart1Inst.destroy();
+      else if (canvasId === 'chart2' && chart2Inst) chart2Inst.destroy();
 
       const labels = (dataArr || []).map(item => item.label);
       const values = (dataArr || []).map(item => item.value);
 
-      chart2Inst = new Chart(ctx, {
+      const newChart = new Chart(ctx, {
         type: 'bar',
         data: {
           labels: labels.length > 0 ? labels : ['Belum ada data'],
           datasets: [{
             label: 'Nilai',
             data: values.length > 0 ? values : [0],
-            backgroundColor: '#3b82f6',
+            backgroundColor: warna || '#3b82f6',
             borderRadius: 8,
             maxBarThickness: 40
           }]
@@ -88,28 +121,37 @@
           plugins: { legend: { display: false } }
         }
       });
+
+      // Simpan instance
+      if (canvasId === 'chart1') chart1Inst = newChart;
+      else if (canvasId === 'chart2') chart2Inst = newChart;
     }
 
     // ==========================================
-    // RENDER RECENT DATA
+    // COMPONENT: Recent Data Table
     // ==========================================
-    function renderRecentData(dataList) {
-      const tbody = document.getElementById('dashRecentData');
+    // tbodyId: ID elemen <tbody>
+    // dataList: [{ key1: val, key2: val, ... }, ...]
+    // keys: array nama properti yg mau ditampilkan (optional, default ['kolom1','kolom2','kolom3'])
+    function renderRecentTable(tbodyId, dataList, keys) {
+      const tbody = document.getElementById(tbodyId);
       if (!tbody) return;
       tbody.innerHTML = '';
 
+      const cols = keys || ['kolom1', 'kolom2', 'kolom3'];
+      const colspan = cols.length;
+
       if (!dataList || dataList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" class="py-4 text-center text-slate-400">Belum ada data.</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="${colspan}" class="py-4 text-center text-slate-400">Belum ada data.</td></tr>`;
         return;
       }
 
       dataList.forEach(item => {
-        tbody.innerHTML += `
-          <tr class="hover:bg-slate-50">
-            <td class="py-2.5 px-3">${item.kolom1 || '-'}</td>
-            <td class="py-2.5 px-3">${item.kolom2 || '-'}</td>
-            <td class="py-2.5 px-3">${item.kolom3 || '-'}</td>
-          </tr>`;
+        let cells = '';
+        cols.forEach(k => {
+          cells += `<td class="py-2.5 px-3">${item[k] || '-'}</td>`;
+        });
+        tbody.innerHTML += `<tr class="hover:bg-slate-50">${cells}</tr>`;
       });
     }
   </script>

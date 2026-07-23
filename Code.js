@@ -95,6 +95,9 @@ function resolveTemplatePath(filename) {
     'JurusanView': 'views/modules/JurusanView',
     'SiswaView': 'views/modules/SiswaView',
     'PembimbingView': 'views/modules/PembimbingView',
+    'ProjekView': 'views/modules/ProjekView',
+    'TugasView': 'views/modules/TugasView',
+    'TugasLaporanView': 'views/modules/laporan/TugasLaporanView',
    
   };
   return map[filename] || filename;
