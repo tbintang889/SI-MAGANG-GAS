@@ -52,9 +52,9 @@
         },
         Sekolah: {
           el: "siswa_Sekolah",
-          type: "text",
+          type: "dropdown",
           label: "Sekolah",
-          placeholder: "Sekolah",
+           options:  ['-- Memuat Sekolah --'],
         },
         PeriodeAwal: {
           el: "siswa_PeriodeAwal",
@@ -507,6 +507,7 @@
   function loadDataSiswa() {
     populateSiswaJurusanDropdown(); 
     populateSiswaPembimbingDropdown(); 
+    populateSiswaSekolahDropdown(); 
     loadData("siswa");
   }
   function simpanSiswa() {
@@ -580,6 +581,23 @@ function simpanSekolah() { simpanData("sekolah"); }
 function editSekolah() { editData("sekolah"); }
 function resetFormSekolah() { resetForm("sekolah"); }
 function hapusSekolah() { hapusData("sekolah"); }
+
+function populateSiswaSekolahDropdown() {
+  google.script.run.withSuccessHandler(listMapel => {
+    const selectEl = document.getElementById('siswa_Sekolah');
+    if (!selectEl) return;
+    const currVal = selectEl.value;               // Simpan pilihan user sebelumnya
+
+    let html = '<option value="">-- Pilih Sekolah --</option>';
+    if (listMapel && listMapel.length > 0) {
+      listMapel.forEach(m => {
+        html += `<option value="${m.nama}">${m.nama} (${m.kode})</option>`;
+      });
+    }
+    selectEl.innerHTML = html;                    // Render ulang <select>
+    if (currVal) selectEl.value = currVal;        // Restore pilihan
+  }).getOptionsSekolah();                           // Panggil server
+}
 renderForm('sekolah');
 
 </script>

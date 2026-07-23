@@ -91,6 +91,7 @@ function resolveTemplatePath(filename) {
     'JavascriptDashboard': 'views/scripts/modules/dashboard/JavascriptDashboard',
     'JavascriptLaporan': 'views/scripts/modules/laporan/JavascriptLaporan',
     // >>> Tambahkan mapping view entitas baru di sini <<<
+    'SekolahView': 'views/modules/SekolahView',
     'JurusanView': 'views/modules/JurusanView',
     'SiswaView': 'views/modules/SiswaView',
     'PembimbingView': 'views/modules/PembimbingView',

@@ -22,6 +22,10 @@
     pembimbing: {
     title: "Manajemen Data Pembimbing",
     loader: () => typeof loadDataPembimbing === "function" && loadDataPembimbing()
+  },
+    sekolah: {
+    title: "Manajemen Data Sekolah",
+    loader: () => typeof loadDataSekolah === "function" && loadDataSekolah()
   }};
 
     function registerMenu(menuKey, config) {
