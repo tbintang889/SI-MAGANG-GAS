@@ -70,9 +70,9 @@
         },
         Pembimbing: {
           el: "siswa_Pembimbing",
-          type: "text",
+          type: "dropdown",
           label: "Pembimbing",
-          placeholder: "Pembimbing",
+          options:  ['-- Memuat Pembimbing --'],
         },
         Surat: {
           el: "siswa_Surat",
@@ -122,6 +122,27 @@
     create: "createPembimbing",
     update: "updatePembimbing",
     delete: "deletePembimbing",
+    tableColumns: [
+        { label: "ID", key: 0 },
+        { label: "Nama", key: 1 },
+        { label: "Kode", key: 2 }
+    ]
+  },
+    sekolah: {
+    formWrapperId: "formSekolah",
+    tableId: "tabelSekolah",
+    titleFormId: "titleFormSekolah",
+    form: {
+        id:   { el: "sekolah_id", type: "hidden" },
+        nama: { el: "sekolah_nama", type: "text", label: "Nama", placeholder: "Nama Sekolah" },
+        kode: { el: "sekolah_kode", type: "text", label: "Kode", placeholder: "Kode Sekolah" }
+    },
+    btnSaveId: "btnSimpanSekolah",
+    btnCancelId: "btnBatalSekolah",
+    loader: ["getSekolah"],
+    create: "createSekolah",
+    update: "updateSekolah",
+    delete: "deleteSekolah",
     tableColumns: [
         { label: "ID", key: 0 },
         { label: "Nama", key: 1 },
@@ -484,7 +505,8 @@
   }
 
   function loadDataSiswa() {
-    populateSiswaJurusanDropdown();  
+    populateSiswaJurusanDropdown(); 
+    populateSiswaPembimbingDropdown(); 
     loadData("siswa");
   }
   function simpanSiswa() {
@@ -533,6 +555,31 @@ function simpanPembimbing() { simpanData("pembimbing"); }
 function editPembimbing() { editData("pembimbing"); }
 function resetFormPembimbing() { resetForm("pembimbing"); }
 function hapusPembimbing() { hapusData("pembimbing"); }
+
+function populateSiswaPembimbingDropdown() {
+  google.script.run.withSuccessHandler(listMapel => {
+    const selectEl = document.getElementById('siswa_Pembimbing');
+    if (!selectEl) return;
+    const currVal = selectEl.value;               // Simpan pilihan user sebelumnya
+
+    let html = '<option value="">-- Pilih Pembimbing --</option>';
+    if (listMapel && listMapel.length > 0) {
+      listMapel.forEach(m => {
+        html += `<option value="${m.nama}">${m.nama} (${m.kode})</option>`;
+      });
+    }
+    selectEl.innerHTML = html;                    // Render ulang <select>
+    if (currVal) selectEl.value = currVal;        // Restore pilihan
+  }).getOptionsPembimbing();                           // Panggil server
+}
 renderForm('pembimbing');
+
+
+function loadDataSekolah() { loadData("sekolah"); }
+function simpanSekolah() { simpanData("sekolah"); }
+function editSekolah() { editData("sekolah"); }
+function resetFormSekolah() { resetForm("sekolah"); }
+function hapusSekolah() { hapusData("sekolah"); }
+renderForm('sekolah');
 
 </script>

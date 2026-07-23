@@ -72,3 +72,12 @@ function deletePembimbing(id) {
     return { success: false, message: "Gagal menghapus pembimbing: " + error.message };
   }
 }
+function getOptionsPembimbing() {
+  var sheet = getSheet('Pembimbing');                  // Baca sheet "Mapel"
+  if (!sheet) return [];
+  var data = sheet.getDataRange().getValues();
+  if (data.length > 0) data.shift();              // Hapus baris header
+  return data.map(function(r) {
+    return { id: r[0], nama: r[1], kode: r[2] }; // Return array objek
+  });
+}
