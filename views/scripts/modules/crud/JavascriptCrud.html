@@ -210,20 +210,17 @@
 
     for (const key in cfg.form) {
       const field = cfg.form[key];
-      const labelText = field.label || key; // ambil label, fallback ke key
+      const labelText = field.label || key;
       let html = "";
 
-      // Hidden field tidak perlu label
       if (field.type === "hidden") {
         html = `<input type="hidden" id="${field.el}">`;
         wrapper.innerHTML += `<div class="mb-3">${html}</div>`;
         continue;
       }
 
-      // Label dengan styling
       let labelHtml = `<label for="${field.el}" class="block text-sm font-medium text-slate-700 mb-1">${labelText}</label>`;
 
-      // Bangun elemen input sesuai tipe
       let inputHtml = "";
       switch (field.type) {
         case "text":
@@ -237,7 +234,6 @@
           inputHtml = `<textarea id="${field.el}" placeholder="${field.placeholder || ""}" class="border p-2.5 rounded-lg w-full"></textarea>`;
           break;
         case "radio":
-          // Untuk radio, label grup diletakkan di atas, opsi di bawah
           const radioOptions = field.options
             .map(
               (opt) =>
@@ -251,12 +247,10 @@
           break;
       }
 
-      // Gabungkan label + input dalam satu div
       html = labelHtml + inputHtml;
       wrapper.innerHTML += `<div class="mb-3">${html}</div>`;
     }
 
-    // Tombol Simpan & Batal
     wrapper.innerHTML += `
     <div class="flex gap-3">
       <button id="${cfg.btnSaveId}" onclick="simpanData('${entity}')" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg">Simpan</button>
@@ -335,7 +329,6 @@
     const cfg = crudConfig[entity];
     const tbody = document.getElementById(cfg.tableId);
 
-    // Wrap table with horizontal scroll if not already wrapped
     const tableEl = tbody.closest("table");
     if (
       tableEl &&
@@ -355,7 +348,6 @@
       return;
     }
 
-    // Build a map of column index → field type (from cfg.form)
     const formKeys = Object.keys(cfg.form);
     const colTypeMap = {};
     formKeys.forEach((key, idx) => {
@@ -367,7 +359,6 @@
       const columns = cfg.tableColumns || [];
 
       if (columns.length === 0) {
-        // Fallback: render all columns
         cells = row
           .map((val) => {
             const displayVal = formatCellValue(val, null);
@@ -396,28 +387,18 @@
     });
   }
 
-  /**
-   * Format a cell value based on its type.
-   * - If value is a Date object → format as YYYY-MM-DD
-   * - If value is falsy (empty, null, undefined) → show "—" (em dash)
-   * - Otherwise → return the value as-is
-   */
   function formatCellValue(value, fieldType) {
-    // Handle empty / null / undefined
     if (value === null || value === undefined || value === "") {
-      return "—"; // or return '' if you prefer blank
+      return "—";
     }
 
-    // If it's a Date object, format it
     if (value instanceof Date) {
-      // Format as YYYY-MM-DD (adjust to your preferred format)
       const year = value.getFullYear();
       const month = String(value.getMonth() + 1).padStart(2, "0");
       const day = String(value.getDate()).padStart(2, "0");
       return `${year}-${month}-${day}`;
     }
 
-    // If field type is 'date' but value is a string, try to parse it
     if (fieldType === "date" && typeof value === "string") {
       const parsed = new Date(value);
       if (!isNaN(parsed)) {
@@ -428,7 +409,6 @@
       }
     }
 
-    // Default: return as string
     return String(value);
   }
   // ==========================================
@@ -464,7 +444,16 @@
     for (const key in cfg.form) {
       obj[key] = getFieldValue(cfg.form[key]);
     }
-    if (!obj.nama) return showToast("Nama wajib diisi!", "error");
+
+    // Validasi spesifik per entitas
+    const entitasTanpaNama = ['tugas'];
+    if (entitasTanpaNama.includes(entity)) {
+      if (!obj.tugas) return showToast("Deskripsi tugas wajib diisi!", "error");
+      if (!obj.siswa_id) return showToast("Siswa wajib dipilih!", "error");
+      if (!obj.projek_id) return showToast("Projek wajib dipilih!", "error");
+    } else {
+      if (!obj.nama) return showToast("Nama wajib diisi!", "error");
+    }
 
     const btn = document.getElementById(cfg.btnSaveId);
     btn.innerText = "Menyimpan...";
@@ -580,13 +569,11 @@ function editJurusan() { editData("jurusan"); }
 function resetFormJurusan() { resetForm("jurusan"); }
 function hapusJurusan() { hapusData("jurusan"); }
 
-
-
 function populateSiswaJurusanDropdown() {
   google.script.run.withSuccessHandler(listMapel => {
     const selectEl = document.getElementById('siswa_Jurusan');
     if (!selectEl) return;
-    const currVal = selectEl.value;               // Simpan pilihan user sebelumnya
+    const currVal = selectEl.value;
 
     let html = '<option value="">-- Pilih Jurusan --</option>';
     if (listMapel && listMapel.length > 0) {
@@ -594,12 +581,11 @@ function populateSiswaJurusanDropdown() {
         html += `<option value="${m.nama}">${m.nama} (${m.kode})</option>`;
       });
     }
-    selectEl.innerHTML = html;                    // Render ulang <select>
-    if (currVal) selectEl.value = currVal;        // Restore pilihan
-  }).getOptionsJurusan();                           // Panggil server
+    selectEl.innerHTML = html;
+    if (currVal) selectEl.value = currVal;
+  }).getOptionsJurusan();
 }
 renderForm('jurusan');
-
 
 function loadDataPembimbing() { loadData("pembimbing"); }
 function simpanPembimbing() { simpanData("pembimbing"); }
@@ -611,7 +597,7 @@ function populateSiswaPembimbingDropdown() {
   google.script.run.withSuccessHandler(listMapel => {
     const selectEl = document.getElementById('siswa_Pembimbing');
     if (!selectEl) return;
-    const currVal = selectEl.value;               // Simpan pilihan user sebelumnya
+    const currVal = selectEl.value;
 
     let html = '<option value="">-- Pilih Pembimbing --</option>';
     if (listMapel && listMapel.length > 0) {
@@ -619,12 +605,11 @@ function populateSiswaPembimbingDropdown() {
         html += `<option value="${m.nama}">${m.nama} (${m.kode})</option>`;
       });
     }
-    selectEl.innerHTML = html;                    // Render ulang <select>
-    if (currVal) selectEl.value = currVal;        // Restore pilihan
-  }).getOptionsPembimbing();                           // Panggil server
+    selectEl.innerHTML = html;
+    if (currVal) selectEl.value = currVal;
+  }).getOptionsPembimbing();
 }
 renderForm('pembimbing');
-
 
 function loadDataSekolah() { loadData("sekolah"); }
 function simpanSekolah() { simpanData("sekolah"); }
@@ -636,7 +621,7 @@ function populateSiswaSekolahDropdown() {
   google.script.run.withSuccessHandler(listMapel => {
     const selectEl = document.getElementById('siswa_Sekolah');
     if (!selectEl) return;
-    const currVal = selectEl.value;               // Simpan pilihan user sebelumnya
+    const currVal = selectEl.value;
 
     let html = '<option value="">-- Pilih Sekolah --</option>';
     if (listMapel && listMapel.length > 0) {
@@ -644,9 +629,9 @@ function populateSiswaSekolahDropdown() {
         html += `<option value="${m.nama}">${m.nama} (${m.kode})</option>`;
       });
     }
-    selectEl.innerHTML = html;                    // Render ulang <select>
-    if (currVal) selectEl.value = currVal;        // Restore pilihan
-  }).getOptionsSekolah();                           // Panggil server
+    selectEl.innerHTML = html;
+    if (currVal) selectEl.value = currVal;
+  }).getOptionsSekolah();
 }
 renderForm('sekolah');
 
