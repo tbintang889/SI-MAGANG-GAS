@@ -323,23 +323,11 @@
   }
 
   // ==========================================
-  // RENDER TABLE
+  // RENDER TABLE (fixed: remove wrapper that shrank table)
   // ==========================================
   function renderTable(entity, data) {
     const cfg = crudConfig[entity];
     const tbody = document.getElementById(cfg.tableId);
-
-    const tableEl = tbody.closest("table");
-    if (
-      tableEl &&
-      tableEl.parentElement &&
-      !tableEl.parentElement.classList.contains("table-scroll-wrap")
-    ) {
-      const wrapper = document.createElement("div");
-      wrapper.className = "table-scroll-wrap overflow-x-auto";
-      tableEl.parentElement.insertBefore(wrapper, tableEl);
-      wrapper.appendChild(tableEl);
-    }
 
     tbody.innerHTML = "";
 
